@@ -128,7 +128,7 @@ nmap <silent> <leader>ev :e `=resolve(expand($MYVIMRC))`<CR>
 nmap <silent> <leader>sv :so $MYVIMRC<CR>
 
 " Buffer switch
-nmap <Leader><Tab> :Buffers 
+nmap <Leader><Tab> :Buffers<cr>
 
 " Toggle relative number
 nmap <Leader>tr :call ToggleRelativeNumber()<CR>
