@@ -2,26 +2,17 @@
 call plug#begin('~/.config/nvim/plugged')
 " ----- * Languages
 Plug 'neovimhaskell/haskell-vim'
-" Plug 'eagletmt/ghcmod-vim'
-Plug 'derekwyatt/vim-scala'
-Plug 'dleonard0/pony-vim-syntax'
-Plug 'guns/vim-sexp'
-Plug 'rust-lang/rust.vim'
-Plug 'Quramy/tsuquyomi'
+Plug 'eagletmt/ghcmod-vim'
 Plug 'raichoo/purescript-vim'
 Plug 'idris-hackers/idris-vim'
 " ----- * Misc
-Plug 'scrooloose/nerdtree', { 'on': 'NERDTreeToggle' }
+Plug 'tpope/vim-fugitive'
+Plug 'airblade/vim-gitgutter'
 Plug 'junegunn/goyo.vim'
 Plug 'junegunn/limelight.vim'
-" Plug 'Shougo/vimproc.vim'
-Plug 'benekastah/neomake'
+Plug 'Shougo/vimproc.vim'
 Plug '/usr/local/opt/fzf'
 Plug 'junegunn/fzf.vim'
-Plug 'tpope/vim-fireplace'
-Plug 'tpope/vim-fugitive'
-Plug 'tommcdo/vim-fubitive'
-" Plug 'ctrlpvim/ctrlp.vim'
 Plug 'kcsongor/vim-monochrome'
 
 " ----- * Coq
@@ -32,7 +23,6 @@ call plug#end()
 
 "-- MISC SETTINGS --------------------------------------------------------------
 syntax on
-set cursorline
 set splitright
 set splitbelow
 set nobackup
@@ -116,14 +106,6 @@ vnoremap <Leader>u "1yhv0yopVr $"1p0wv$r^
 " Call the pastebin function with selection
 vnoremap <silent> t :call Termbin()<cr>
 
-" Go line-by-line on wrapped lines too
-" nmap j gj
-" nmap k gk
-
-" Save file
-nnoremap <Leader>tn :tabnew<CR>
-nnoremap <Leader>tc :tabclose<CR>
-
 nmap <silent> <leader>ev :e `=resolve(expand($MYVIMRC))`<CR>
 nmap <silent> <leader>sv :so $MYVIMRC<CR>
 
@@ -136,7 +118,7 @@ nmap <Leader>tr :call ToggleRelativeNumber()<CR>
 " Cd to current file
 nmap <Leader>cd :cd %:h<cr>
 
-nnoremap <Leader>g :Goyo<cr>
+nnoremap <Leader>go :Goyo<cr>
 nnoremap <Leader>ll :Limelight!! 0.4 <cr>
 
 function! s:goyo_enter()
@@ -215,67 +197,21 @@ function! RelativeNumber()
     endif
 endfunction
 
-" -- Ag search
-function! s:ag_to_qf(line)
-  let parts = split(a:line, ':')
-  return {'filename': parts[0], 'lnum': parts[1], 'col': parts[2],
-        \ 'text': join(parts[3:], ':')}
-endfunction
-
-function! s:ag_handler(lines)
-  if len(a:lines) < 2 | return | endif
-
-  let cmd = get({'ctrl-x': 'split',
-               \ 'ctrl-v': 'vertical split',
-               \ 'ctrl-t': 'tabe'}, a:lines[0], 'e')
-  let list = map(a:lines[1:], 's:ag_to_qf(v:val)')
-
-  let first = list[0]
-  execute cmd escape(first.filename, ' %#\')
-  execute first.lnum
-  execute 'normal!' first.col.'|zz'
-
-  if len(list) > 1
-    call setqflist(list)
-    copen
-    wincmd p
-  endif
-endfunction
-
-command! -nargs=* Ag call fzf#run({
-\ 'source':  printf('ag --nogroup --column --color "%s"',
-\                   escape(empty(<q-args>) ? '^(?=.)' : <q-args>, '"\')),
-\ 'sink*':    function('<sid>ag_handler'),
-\ 'options': '--ansi --expect=ctrl-t,ctrl-v,ctrl-x --delimiter : --nth 4.. '.
-\            '--multi --bind=ctrl-a:select-all,ctrl-d:deselect-all '.
-\            '--color hl:68,hl+:110 '.
-\            '--reverse '.
-\            '--preview="tail \$(echo {} | gsed -r \"s/(.*):([0-9]+):[0-9]+:.*$/ -n +\2 \1/\" ) | head -"$(tput lines) ',
-\ 'down':    '50%'
-\ })
-" -- End ag search
-
 set wildignore+=*/tmp/*,*.so,*.swp,*.zip,*.class,*.sjsir
 
 "-- PLUGINS --------------------------------------------------------------------
-
 let g:indent_guides_start_level = 1
 let g:indent_guides_auto_colors = 0
 autocmd VimEnter,Colorscheme * :hi IndentGuidesOdd  ctermbg=233
 autocmd VimEnter,Colorscheme * :hi IndentGuidesEven ctermbg=234
 
-" autocmd! BufWritePost * Neomake
+" Show highlight group
+nnoremap <leader>hg :echo "hi<" . synIDattr(synID(line("."),col("."),1),"name") . '> trans<'
+\ . synIDattr(synID(line("."),col("."),0),"name") . "> lo<"
+\ . synIDattr(synIDtrans(synID(line("."),col("."),1)),"name") . ">"<CR>
 
-let g:ctrlp_custom_ignore = 'node_modules\|DS_Store\|build\|git\|bower_components'
-
-nnoremap <silent> <Leader>p :CtrlPCurWD <cr>
-nnoremap <silent> <Leader>a :Ag <cr>
-noremap <C-p> :FZF -m --reverse --preview="head -"$(tput lines)" {}"<CR>
 
 "-- FILETYPE SPECIFIC ----------------------------------------------------------
-autocmd FileType clojure nnoremap <silent> <Leader>ef :Eval<cr>
-autocmd FileType clojure nnoremap <silent> <Leader>eb :%Eval<cr>
-autocmd FileType clojure inoremap <silent> <C-e> <Esc>:Eval<cr>
 
 " Haskell
 autocmd FileType haskell nnoremap <silent> <Leader>sb :call SendGHCI(@%)<cr>
@@ -284,12 +220,10 @@ autocmd FileType haskell nnoremap <silent> <Leader>tt :GhcModType<cr>
 autocmd FileType haskell nnoremap <silent> <Leader>ti :GhcModTypeInsert<cr>
 autocmd FileType haskell nnoremap <silent> <Leader>d  :GhcModSigCodegen<cr>
 autocmd FileType haskell nnoremap <silent> <Leader>c  :GhcModSplitFunCase<cr>
-" autocmd BufWritePost *.hs silent :GhcModCheckAndLintAsync
 
 autocmd FileType coq nnoremap <Leader>cn :CoqNext<cr>
 autocmd FileType coq nnoremap <Leader>cc :CoqToCursor<cr>
 autocmd FileType coq nnoremap <Leader>cu :CoqUndo<cr>
-autocmd FileType coq nnoremap <Leader>cq iProof. reflexivity. Qed.<C-c>:CoqToCursor<cr>
 
 set diffopt+=iwhite
 set diffexpr=DiffW()
@@ -304,3 +238,90 @@ function! DiffW()
    silent execute "!diff -a --binary " . opt .
      \ v:fname_in . " " . v:fname_new .  " > " . v:fname_out
 endfunction
+"-- Misc plugins and mappings --------------------------------------------------
+nnoremap <leader>a :Ag!<cr>
+nnoremap <leader>l :Lines<cr>
+nnoremap <leader>bc :BCommits<cr>
+nnoremap <leader>gc :Commits<cr>
+nnoremap <leader>bl :BLines<cr>
+nnoremap <leader>gg :GitGutterLineHighlightsToggle<cr>
+let g:gitgutter_diff_args = '-w'
+nnoremap <leader><Tab> :Buffers<cr>
+nnoremap <leader><Enter> :Commands<cr>
+noremap <C-p> :FZF<cr>
+let g:fzf_buffers_jump = 1
+
+let g:fzf_colors =
+\ { 'fg':      ['fg', 'Comment'],
+  \ 'bg':      ['bg', 'Normal'],
+  \ 'hl':      ['fg', 'String'],
+  \ 'fg+':     ['fg', 'Comment', 'String', 'Normal'],
+  \ 'bg+':     ['bg', 'CursorLine', 'CursorColumn'],
+  \ 'hl+':     ['fg', 'Statement'],
+  \ 'info':    ['fg', 'PreProc'],
+  \ 'prompt':  ['fg', 'Conditional'],
+  \ 'pointer': ['fg', 'Exception'],
+  \ 'marker':  ['fg', 'Keyword'],
+  \ 'spinner': ['fg', 'Label'],
+  \ 'header':  ['fg', 'Comment'] }
+
+command! -bang -nargs=* Ag
+  \ call fzf#vim#ag(<q-args>,
+  \                 <bang>0 ? fzf#vim#with_preview('up:60%')
+  \                         : fzf#vim#with_preview('right:50%:hidden', '?'),
+  \                 <bang>0)
+
+function! s:fzf_statusline()
+  highlight fzf1 ctermfg=161 ctermbg=251
+  highlight fzf2 ctermfg=23 ctermbg=251
+  highlight fzf3 ctermfg=237 ctermbg=251
+  setlocal statusline=%{getcwd()}%#fzf1#\ >\ %#fzf2#fz%#fzf3#f
+endfunction
+
+autocmd! User FzfStatusLine call <SID>fzf_statusline()
+
+nnoremap <leader>x( di(va(p``
+nnoremap <leader>x[ di[va[p``
+nnoremap <leader>x{ di{va{p``
+
+function! ChooseBuffer (buffername)
+  let bnr = bufwinnr(a:buffername)
+  if bnr > 0
+    :exe bnr . "wincmd w"
+  else
+    echo a:buffername . ' does not exist'
+    silent execute 'split ' . a:buffername
+  endif
+endfunction
+
+function! SendGHCI()
+    let bnr = bufwinnr("ghci")
+    if bnr > 0
+      :exe bnr . "wincmd w"
+    else
+      :vsplit term://ghci\ %
+    endif
+endfunction
+
+function! ReloadGHCI()
+    let bnr = bufwinnr("ghci")
+    let cur = bufwinnr("%")
+    if bnr > 0
+      :exe bnr . "wincmd w"
+      :call feedkeys("\<C-l>:r\<cr>\<Esc>\<C-\>\<C-n>:".cur."wincmd w\<cr>")
+    endif
+endfunction
+
+autocmd FileType haskell nnoremap <silent> <Leader>r :call ReloadGHCI()<cr>
+autocmd FileType haskell nnoremap <silent> <Leader>r :call ReloadGHCI()<cr>
+
+"-- SYNTAX HASKELL -----------------------------------------------------------
+
+let g:haskell_enable_quantification = 1
+let g:haskell_enable_recursivedo = 1
+let g:haskell_enable_arrowsyntax = 1
+let g:haskell_enable_pattern_synonyms = 1
+let g:haskell_enable_typeroles = 1
+let g:haskell_enable_static_pointers = 1
+let g:haskell_backpack = 1
+let g:haskell_disable_TH = 1
