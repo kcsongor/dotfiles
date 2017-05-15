@@ -124,11 +124,11 @@ vnoremap <silent> t :call Termbin()<cr>
 nnoremap <Leader>tn :tabnew<CR>
 nnoremap <Leader>tc :tabclose<CR>
 
-nmap <silent> <leader>ev :e $MYVIMRC<CR>
+nmap <silent> <leader>ev :e `=resolve(expand($MYVIMRC))`<CR>
 nmap <silent> <leader>sv :so $MYVIMRC<CR>
 
 " Buffer switch
-nmap <Leader><Tab> :b 
+nmap <Leader><Tab> :Buffers 
 
 " Toggle relative number
 nmap <Leader>tr :call ToggleRelativeNumber()<CR>
@@ -293,7 +293,7 @@ autocmd FileType coq nnoremap <Leader>cq iProof. reflexivity. Qed.<C-c>:CoqToCur
 
 set diffopt+=iwhite
 set diffexpr=DiffW()
-function DiffW()
+function! DiffW()
   let opt = ""
    if &diffopt =~ "icase"
      let opt = opt . "-i "
