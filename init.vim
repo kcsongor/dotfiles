@@ -214,18 +214,18 @@ for lp in s:ghc_cached_language_pragmas
   exe 'amenu GHC_LANGUAGES.' . lp . ' :call append(0, "{-# LANGUAGE ' . lp . ' #-}")<cr>'
 endfor
 
-"function! LoadCabal()
-"  let s:stack_cached_pkgs
-"    \= sort(split(system('stack exec -- ghc-pkg list --simple-output'), ' '))
-"
-"  for lp in s:stack_cached_pkgs
-"    let pkgname = matchstr(lp, '[^0-9]*')[0:-2]
-"    exe 'amenu GHC_PACKAGES.' . pkgname . ' :call append(0, "{-# LANGUAGE ' . pkgname . ' #-}")<cr>'
-"  endfor
-"endfunction
-"
-"autocmd FileType cabal :call LoadCabal()
-autocmd FileType cabal noremap <LocalLeader>eee :emenu GHC_PACKAGES.
+function! LoadCabal()
+  let s:stack_cached_pkgs
+    \= sort(split(system('stack exec -- ghc-pkg list --simple-output'), ' '))
+
+  for lp in s:stack_cached_pkgs
+    let pkgname = matchstr(lp, '.*-')[0:-2]
+    exe 'amenu GHC_PACKAGES.' . pkgname . ' :call append((search("build-depends", "n") + 1), repeat(" ", cindent(search("build-depends", "n"))) . ", ' . pkgname . '")<cr>'
+  endfor
+endfunction
+
+autocmd FileType cabal :call LoadCabal()
+autocmd FileType cabal noremap <LocalLeader>ci :emenu GHC_PACKAGES.
 
 autocmd FileType haskell noremap <LocalLeader>la :emenu GHC_LANGUAGES.
 autocmd FileType haskell noremap <LocalLeader>sl mzgg:Tabularize/#-}<CR>vip:sort<CR>`z
