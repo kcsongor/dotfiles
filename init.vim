@@ -9,16 +9,14 @@ Plug 'idris-hackers/idris-vim'
 Plug 'junegunn/vim-journal'
 Plug 'tpope/vim-fugitive'
 Plug 'airblade/vim-gitgutter'
+Plug 'junegunn/gv.vim'
 Plug 'junegunn/goyo.vim'
 Plug 'junegunn/limelight.vim'
 Plug 'Shougo/vimproc.vim'
 Plug '/usr/local/opt/fzf'
 Plug 'junegunn/fzf.vim'
-Plug 'wting/lhaskell.vim'
-Plug 'jceb/vim-orgmode'
-Plug 'tpope/vim-speeddating'
 Plug 'enomsg/vim-haskellConcealPlus'
-" ----- * Colours
+Plug 'junegunn/vim-easy-align'
 Plug 'kcsongor/vim-monochrome'
 " ----- * Coq
 Plug 'def-lkb/vimbufsync'
@@ -194,6 +192,45 @@ endfunction
 
 autocmd FileType haskell nnoremap <silent> <Leader>r :w<cr> :call ReloadGHCI()<cr>
 
+function! EditCabal(path)
+  let cabals = split(globpath(a:path, '*.cabal'), '\n')
+  let dir    = fnamemodify(a:path, ':h')
+  if (dir != '/')
+    if (len(cabals) == 0)
+      call EditCabal(dir)
+    else
+      execute 'edit' cabals[0]
+    endif
+  else
+    echo "No cabal file found"
+  endif
+endfunction
+
+autocmd FileType haskell nnoremap <silent> <leader>ec :call EditCabal(expand('%:p'))<cr>
+
+let s:ghc_cached_language_pragmas
+  \= sort(split(system('ghc --supported-languages'), '\n'))
+
+for lp in s:ghc_cached_language_pragmas
+  exe 'amenu GHC_LANGUAGES.' . lp . ' :call append(0, "{-# LANGUAGE ' . lp . ' #-}")<cr>'
+endfor
+
+function! LoadCabal()
+  let s:stack_cached_pkgs
+    \= sort(split(system('stack exec -- ghc-pkg list --simple-output'), ' '))
+
+  for lp in s:stack_cached_pkgs
+    let pkgname = matchstr(lp, '.*-')[0:-2]
+    exe 'amenu GHC_PACKAGES.' . pkgname . ' :call append((search("build-depends", "n") + 1), repeat(" ", cindent(search("build-depends", "n"))) . ", ' . pkgname . '")<cr>'
+  endfor
+endfunction
+
+autocmd FileType cabal :call LoadCabal()
+autocmd FileType cabal noremap <LocalLeader>ci :emenu GHC_PACKAGES.
+
+autocmd FileType haskell noremap <LocalLeader>la :emenu GHC_LANGUAGES.
+autocmd FileType haskell noremap <LocalLeader>sl mzgg:Tabularize/#-}<CR>vip:sort<CR>`z
+
 function! RelativeNumber()
     if &number
         set rnu
@@ -244,16 +281,21 @@ function! DiffW()
      \ v:fname_in . " " . v:fname_new .  " > " . v:fname_out
 endfunction
 "-- Misc plugins and mappings --------------------------------------------------
+xmap ga <Plug>(EasyAlign)
+
+nmap ga <Plug>(EasyAlign)
+
 nnoremap <leader>a :Ag!<cr>
-nnoremap <leader>l :Lines<cr>
 nnoremap <leader>bc :BCommits<cr>
 nnoremap <leader>gc :Commits<cr>
+nnoremap <leader>gf :GFiles?<cr>
 nnoremap <leader>bl :BLines<cr>
 nnoremap <leader>gg :GitGutterLineHighlightsToggle<cr>
 let g:gitgutter_diff_args = '-w'
 nnoremap <leader><Tab> :Buffers<cr>
 nnoremap <leader><Enter> :Commands<cr>
 noremap <C-p> :FZF<cr>
+nnoremap <leader>gt :call fzf#vim#tags(expand('<cword>'), {'options': '--exact --select-1 --exit-0'})<CR>
 let g:fzf_buffers_jump = 1
 
 let g:fzf_colors =
@@ -298,7 +340,6 @@ function! ChooseBuffer (buffername)
     silent execute 'split ' . a:buffername
   endif
 endfunction
-
 
 "-- SYNTAX HASKELL -----------------------------------------------------------
 
