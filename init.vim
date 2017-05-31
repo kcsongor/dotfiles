@@ -6,6 +6,7 @@ Plug 'eagletmt/ghcmod-vim'
 Plug 'raichoo/purescript-vim'
 Plug 'idris-hackers/idris-vim'
 " ----- * Misc
+Plug 'junegunn/vim-journal'
 Plug 'tpope/vim-fugitive'
 Plug 'airblade/vim-gitgutter'
 Plug 'junegunn/goyo.vim'
@@ -13,8 +14,12 @@ Plug 'junegunn/limelight.vim'
 Plug 'Shougo/vimproc.vim'
 Plug '/usr/local/opt/fzf'
 Plug 'junegunn/fzf.vim'
+Plug 'wting/lhaskell.vim'
+Plug 'jceb/vim-orgmode'
+Plug 'tpope/vim-speeddating'
+Plug 'enomsg/vim-haskellConcealPlus'
+" ----- * Colours
 Plug 'kcsongor/vim-monochrome'
-
 " ----- * Coq
 Plug 'def-lkb/vimbufsync'
 Plug 'the-lambda-church/coquille'
@@ -294,34 +299,23 @@ function! ChooseBuffer (buffername)
   endif
 endfunction
 
-function! SendGHCI()
-    let bnr = bufwinnr("ghci")
-    if bnr > 0
-      :exe bnr . "wincmd w"
-    else
-      :vsplit term://ghci\ %
-    endif
-endfunction
-
-function! ReloadGHCI()
-    let bnr = bufwinnr("ghci")
-    let cur = bufwinnr("%")
-    if bnr > 0
-      :exe bnr . "wincmd w"
-      :call feedkeys("\<C-l>:r\<cr>\<Esc>\<C-\>\<C-n>:".cur."wincmd w\<cr>")
-    endif
-endfunction
-
-autocmd FileType haskell nnoremap <silent> <Leader>r :call ReloadGHCI()<cr>
-autocmd FileType haskell nnoremap <silent> <Leader>r :call ReloadGHCI()<cr>
 
 "-- SYNTAX HASKELL -----------------------------------------------------------
 
-let g:haskell_enable_quantification = 1
-let g:haskell_enable_recursivedo = 1
-let g:haskell_enable_arrowsyntax = 1
-let g:haskell_enable_pattern_synonyms = 1
-let g:haskell_enable_typeroles = 1
-let g:haskell_enable_static_pointers = 1
-let g:haskell_backpack = 1
+"let g:haskell_enable_quantification = 1
+"let g:haskell_enable_recursivedo = 1
+"let g:haskell_enable_arrowsyntax = 1
+"let g:haskell_enable_pattern_synonyms = 1
+"let g:haskell_enable_typeroles = 1
+"let g:haskell_enable_static_pointers = 1
+"let g:haskell_backpack = 1
 let g:haskell_disable_TH = 1
+
+"-- CONCEAL ------------------------------------------------------------------
+
+"-- HIGHLIGHTS ---------------------------------------------------------------
+
+hi DiffAdd    ctermfg=white ctermfg=35 ctermbg=232
+hi DiffChange ctermfg=white ctermbg=black
+hi DiffDelete ctermfg=1     ctermbg=black
+hi DiffText   ctermfg=blue  ctermbg=black
