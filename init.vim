@@ -2,6 +2,7 @@
 call plug#begin('~/.config/nvim/plugged')
 " ----- * Languages
 Plug 'neovimhaskell/haskell-vim'
+" Plug 'parsonsmatt/intero-neovim'
 Plug 'eagletmt/ghcmod-vim'
 Plug 'raichoo/purescript-vim'
 Plug 'idris-hackers/idris-vim'
@@ -175,7 +176,7 @@ function! SendCORE(file)
     if bnr > 0
       :exe bnr . "wincmd w"
     else
-      vnew | :call termopen("ghc-core --no-cast -- -dsuppress-var-kinds -dsuppress-type-applications -dsuppress-uniques " . a:file) | :startinsert
+      vnew | :call termopen("stack exec -- ghc-core --no-cast -- -dsuppress-var-kinds -dsuppress-type-applications -dsuppress-uniques " . a:file) | :startinsert
     endif
 endfunction
 
@@ -216,10 +217,10 @@ for lp in s:ghc_cached_language_pragmas
 endfor
 
 function! LoadCabal()
-  let s:stack_cached_pkgs
+  let s:stack_pkgs
     \= sort(split(system('stack exec -- ghc-pkg list --simple-output'), ' '))
 
-  for lp in s:stack_cached_pkgs
+  for lp in s:stack_pkgs
     let pkgname = matchstr(lp, '.*-')[0:-2]
     exe 'amenu GHC_PACKAGES.' . pkgname . ' :call append((search("build-depends", "n") + 1), repeat(" ", cindent(search("build-depends", "n"))) . ", ' . pkgname . '")<cr>'
   endfor
@@ -298,6 +299,8 @@ noremap <C-p> :FZF<cr>
 nnoremap <leader>gt :call fzf#vim#tags(expand('<cword>'), {'options': '--exact --select-1 --exit-0'})<CR>
 let g:fzf_buffers_jump = 1
 
+nnoremap <leader>gf :call fzf#vim#ag("module " . expand('<cWORD>'))<cr>
+
 let g:fzf_colors =
 \ { 'fg':      ['fg', 'Comment'],
   \ 'bg':      ['bg', 'Normal'],
@@ -317,6 +320,13 @@ command! -bang -nargs=* Ag
   \                 <bang>0 ? fzf#vim#with_preview('up:60%')
   \                         : fzf#vim#with_preview('right:50%:hidden', '?'),
   \                 <bang>0)
+
+command! -bang -nargs=* Rg
+  \ call fzf#vim#grep(
+  \   'rg --column --line-number --no-heading --color=always '.shellescape(<q-args>), 1,
+  \   <bang>0 ? fzf#vim#with_preview('up:60%')
+  \           : fzf#vim#with_preview('right:50%:hidden', '?'),
+  \   <bang>0)
 
 function! s:fzf_statusline()
   highlight fzf1 ctermfg=161 ctermbg=251
@@ -353,6 +363,18 @@ endfunction
 let g:haskell_disable_TH = 1
 
 "-- CONCEAL ------------------------------------------------------------------
+
+function! ToggleConcealQualified()
+  if (matchdelete(99) == -1)
+    call matchadd('Conceal', '\(import\|as\)\@<![^a-zA-Z0-9\.]\zs\([A-Z]\w*\.\)\+', 100, 99)
+  endif
+endfunction
+
+nnoremap <silent> <leader>cc :silent! call ToggleConcealQualified()<cr>
+set conceallevel=3
+
+autocmd! InsertEnter * :set conceallevel=0
+autocmd! InsertLeave * :set conceallevel=2
 
 "-- HIGHLIGHTS ---------------------------------------------------------------
 
