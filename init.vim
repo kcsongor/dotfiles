@@ -16,9 +16,9 @@ Plug 'junegunn/limelight.vim'
 Plug 'Shougo/vimproc.vim'
 Plug '/usr/local/opt/fzf'
 Plug 'junegunn/fzf.vim'
-Plug 'enomsg/vim-haskellConcealPlus'
 Plug 'junegunn/vim-easy-align'
 Plug 'kcsongor/vim-monochrome'
+Plug 'godlygeek/tabular/'
 " ----- * Coq
 Plug 'def-lkb/vimbufsync'
 Plug 'the-lambda-church/coquille'
@@ -58,6 +58,10 @@ set list
 
 " vertical split in diff
 set diffopt+=vertical
+
+set foldmethod=indent
+set foldlevel=20
+set sessionoptions+=tabpages,globals
 
 set statusline=[%n]\ %<%.99f\ %h%w%m%r%y%=%-16(\ %c\ %)
 
@@ -171,6 +175,25 @@ function! SendGHCI(file)
     endif
 endfunction
 
+function! SendGHCITarget(path)
+    let bnr = bufwinnr("ghci")
+    if bnr > 0
+      :exe bnr . "wincmd w"
+    else
+      let cabals = split(globpath(a:path, '*.cabal'), '\n')
+      let dir    = fnamemodify(a:path, ':h')
+      if (dir != '/')
+        if (len(cabals) == 0)
+          call SendGHCITarget(dir)
+        else
+          vnew | :call termopen("stack ghci " . fnamemodify(cabals[0], ':h')) | :startinsert
+        endif
+      else
+        echo "Not a cabal project"
+      endif
+    endif
+endfunction
+
 function! SendCORE(file)
     let bnr = bufwinnr("ghc-core")
     if bnr > 0
@@ -209,6 +232,13 @@ endfunction
 
 autocmd FileType haskell nnoremap <silent> <leader>ec :call EditCabal(expand('%:p'))<cr>
 
+function! InsertHabitoModuleName(path)
+  let mname  = fnamemodify(a:path, ":s?.*/Habito?Habito?:r:gs?/?.?")
+  exe ':call append(0, "module ' . mname . ' where")'
+endfunction
+
+autocmd FileType haskell nnoremap <silent> <leader>mi :call InsertHabitoModuleName(expand('%:p'))<cr>
+
 let s:ghc_cached_language_pragmas
   \= sort(split(system('ghc --supported-languages'), '\n'))
 
@@ -231,6 +261,7 @@ autocmd FileType cabal noremap <LocalLeader>ci :emenu GHC_PACKAGES.
 
 autocmd FileType haskell noremap <LocalLeader>la :emenu GHC_LANGUAGES.
 autocmd FileType haskell noremap <LocalLeader>sl mzgg:Tabularize/#-}<CR>vip:sort<CR>`z
+autocmd FileType haskell noremap <LocalLeader>si mz:Tabularize/as<CR>vip:sort<CR>`z
 
 function! RelativeNumber()
     if &number
@@ -258,6 +289,7 @@ nnoremap <leader>hg :echo "hi<" . synIDattr(synID(line("."),col("."),1),"name") 
 
 " Haskell
 autocmd FileType haskell nnoremap <silent> <Leader>sb :call SendGHCI(@%)<cr>
+autocmd FileType haskell nnoremap <silent> <Leader>st :call SendGHCITarget(expand('%:p'))<cr>
 autocmd FileType haskell nnoremap <silent> <Leader>sc :call SendCORE(@%)<cr>
 autocmd FileType haskell nnoremap <silent> <Leader>tt :GhcModType<cr>
 autocmd FileType haskell nnoremap <silent> <Leader>ti :GhcModTypeInsert<cr>
@@ -366,15 +398,15 @@ let g:haskell_disable_TH = 1
 
 function! ToggleConcealQualified()
   if (matchdelete(99) == -1)
-    call matchadd('Conceal', '\(import\|as\)\@<![^a-zA-Z0-9\.]\zs\([A-Z]\w*\.\)\+', 100, 99)
+    call matchadd('Conceal', '\(qualified\|import\|as\)\@<![^a-zA-Z0-9\.]\zs\([A-Z]\w*\.\)\+', 100, 99)
   endif
 endfunction
 
 nnoremap <silent> <leader>cc :silent! call ToggleConcealQualified()<cr>
-set conceallevel=3
 
 autocmd! InsertEnter * :set conceallevel=0
 autocmd! InsertLeave * :set conceallevel=2
+set concealcursor=nvic
 
 "-- HIGHLIGHTS ---------------------------------------------------------------
 
