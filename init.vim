@@ -19,10 +19,13 @@ Plug 'junegunn/fzf.vim'
 Plug 'junegunn/vim-easy-align'
 Plug 'kcsongor/vim-monochrome'
 Plug 'godlygeek/tabular/'
+Plug 'easymotion/vim-easymotion'
 " ----- * Coq
 Plug 'def-lkb/vimbufsync'
 Plug 'the-lambda-church/coquille'
 Plug 'jvoorhis/coq.vim'
+Plug 'chrisbra/Colorizer'
+
 call plug#end()
 
 "-- MISC SETTINGS --------------------------------------------------------------
@@ -44,6 +47,7 @@ colorscheme monochrome
 filetype indent off
 
 set wildignore+=*/tmp/*,*.so,*.swp,*.zip
+set iskeyword+=-
 
 " Always return to terminal in insert mode
 autocmd BufWinEnter,WinEnter term://* startinsert
@@ -129,12 +133,13 @@ nmap <Leader>cd :cd %:h<cr>
 nnoremap <Leader>go :Goyo<cr>
 nnoremap <Leader>ll :Limelight!! 0.4 <cr>
 
+let g:goyo_width=120
+
 function! s:goyo_enter()
   silent !tmux set status off
   silent !tmux list-panes -F '\#F' | grep -q Z || tmux resize-pane -Z
   set noshowmode
   set noshowcmd
-  set scrolloff=999
   Limelight 0.4
 endfunction
 
@@ -324,6 +329,7 @@ nnoremap <leader>gc :Commits<cr>
 nnoremap <leader>gf :GFiles?<cr>
 nnoremap <leader>bl :BLines<cr>
 nnoremap <leader>gg :GitGutterLineHighlightsToggle<cr>
+nnoremap <leader>gb :Gblame<cr>
 let g:gitgutter_diff_args = '-w'
 nnoremap <leader><Tab> :Buffers<cr>
 nnoremap <leader><Enter> :Commands<cr>
@@ -410,7 +416,10 @@ set concealcursor=nvic
 
 "-- HIGHLIGHTS ---------------------------------------------------------------
 
-hi DiffAdd    ctermfg=white ctermfg=35 ctermbg=232
-hi DiffChange ctermfg=white ctermbg=black
-hi DiffDelete ctermfg=1     ctermbg=black
-hi DiffText   ctermfg=blue  ctermbg=black
+hi DiffAdd    ctermfg=white   ctermfg=35 ctermbg=232
+hi DiffChange ctermfg=blue    ctermbg=black
+hi DiffDelete ctermfg=1       ctermbg=black
+hi DiffText   ctermfg=yellow  ctermbg=black
+
+nnoremap <silent> <leader>t :silent !tmux send-keys -ttall:zsh.0 "clear && stack build --fast" C-m<cr>
+vnoremap <leader>wed :'<,'>normal we D<cr>
