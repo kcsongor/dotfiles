@@ -97,3 +97,4 @@ export PATH=$PATH:~/habito-web/node_modules/purescript/bin/
 alias shci='stack ghci $(find . -name "*.cabal" | perl -lpe "s/.*\/(.*)\.cabal/\1/g" | fzf)'
 alias import='ag --nocolor --nogroup --nofilename "import qualified (\S+)(\s)+as" | perl -lpe "s/ +/ /g" | grep -v "^--" | sort | uniq | fzf | pbcopy'
 alias tags='hasktags . -R --ctags'
+alias vim='nvim'

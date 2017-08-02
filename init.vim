@@ -4,28 +4,30 @@ call plug#begin('~/.config/nvim/plugged')
 Plug 'neovimhaskell/haskell-vim'
 " Plug 'parsonsmatt/intero-neovim'
 Plug 'eagletmt/ghcmod-vim'
-Plug 'raichoo/purescript-vim'
 Plug 'idris-hackers/idris-vim'
+Plug 'neovimhaskell/haskell-vim'
+Plug 'raichoo/purescript-vim'
 " ----- * Misc
-Plug 'junegunn/vim-journal'
-Plug 'tpope/vim-fugitive'
-Plug 'airblade/vim-gitgutter'
-Plug 'junegunn/gv.vim'
-Plug 'junegunn/goyo.vim'
-Plug 'junegunn/limelight.vim'
-Plug 'Shougo/vimproc.vim'
 Plug '/usr/local/opt/fzf'
+Plug 'Shougo/vimproc.vim'
+Plug 'airblade/vim-gitgutter'
+Plug 'godlygeek/tabular/'
 Plug 'junegunn/fzf.vim'
+Plug 'junegunn/goyo.vim'
+Plug 'junegunn/gv.vim'
+Plug 'junegunn/limelight.vim'
 Plug 'junegunn/vim-easy-align'
+Plug 'junegunn/vim-journal'
 Plug 'kcsongor/vim-monochrome'
 Plug 'godlygeek/tabular/'
 Plug 'easymotion/vim-easymotion'
+Plug 'ndmitchell/ghcid', { 'rtp': 'plugins/nvim' }
+Plug 'scrooloose/nerdtree'
+Plug 'tpope/vim-fugitive'
 " ----- * Coq
 Plug 'def-lkb/vimbufsync'
-Plug 'the-lambda-church/coquille'
 Plug 'jvoorhis/coq.vim'
-Plug 'chrisbra/Colorizer'
-
+Plug 'the-lambda-church/coquille'
 call plug#end()
 
 "-- MISC SETTINGS --------------------------------------------------------------
@@ -172,11 +174,11 @@ function! ToggleRelativeNumber()
 endfunction
 
 function! SendGHCI(file)
-    let bnr = bufwinnr("ghci")
+    let bnr = bufwinnr("stack")
     if bnr > 0
       :exe bnr . "wincmd w"
     else
-      vnew | :call termopen("stack exec -- ghci " . a:file) | :startinsert
+      vnew | :call termopen("stack repl " . a:file) | :startinsert
     endif
 endfunction
 
@@ -209,7 +211,7 @@ function! SendCORE(file)
 endfunction
 
 function! ReloadGHCI()
-    let bnr = bufwinnr("ghci")
+    let bnr = bufwinnr("stack")
     let cur = bufwinnr("%")
     if bnr > 0
       :exe bnr . "wincmd w"
@@ -335,6 +337,7 @@ nnoremap <leader><Tab> :Buffers<cr>
 nnoremap <leader><Enter> :Commands<cr>
 noremap <C-p> :FZF<cr>
 nnoremap <leader>gt :call fzf#vim#tags(expand('<cword>'), {'options': '--exact --select-1 --exit-0'})<CR>
+nnoremap <leader>t :Tabularize/
 let g:fzf_buffers_jump = 1
 
 nnoremap <leader>gf :call fzf#vim#ag("module " . expand('<cWORD>'))<cr>
@@ -401,6 +404,7 @@ endfunction
 let g:haskell_disable_TH = 1
 
 "-- CONCEAL ------------------------------------------------------------------
+syntax match hsNiceOperator "\/=" conceal cchar=≠
 
 function! ToggleConcealQualified()
   if (matchdelete(99) == -1)
