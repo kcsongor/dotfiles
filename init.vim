@@ -207,7 +207,7 @@ function! SendCORE(file)
 endfunction
 
 function! ReloadGHCI()
-    let bnr = bufwinnr("stack")
+    let bnr = bufwinnr("repl")
     let cur = bufwinnr("%")
     if bnr > 0
       :exe bnr . "wincmd w"
@@ -409,8 +409,8 @@ endfunction
 
 nnoremap <silent> <leader>cc :silent! call ToggleConcealQualified()<cr>
 
-autocmd! InsertEnter * :set conceallevel=0
-autocmd! InsertLeave * :set conceallevel=2
+"autocmd! InsertEnter * :set conceallevel=0
+"autocmd! InsertLeave * :set conceallevel=2
 set concealcursor=nvic
 
 "-- HIGHLIGHTS ---------------------------------------------------------------
@@ -419,3 +419,11 @@ hi DiffAdd    ctermfg=white ctermfg=35 ctermbg=232
 hi DiffChange ctermfg=white ctermbg=black
 hi DiffDelete ctermfg=1     ctermbg=black
 hi DiffText   ctermfg=blue  ctermbg=black
+
+
+"-- iPad BINDINGS -------------------------------------------------------------
+nnoremap <leader>w <C-w>
+nnoremap <leader>tn :tabnew<cr>
+nnoremap <leader>ll :tabn<cr>
+nnoremap <leader>hh :tabp<cr>
+
