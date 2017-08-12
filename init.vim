@@ -28,6 +28,8 @@ Plug 'tpope/vim-fugitive'
 Plug 'def-lkb/vimbufsync'
 Plug 'jvoorhis/coq.vim'
 Plug 'the-lambda-church/coquille'
+
+Plug 'kcsongor/vim-monochrome-light'
 call plug#end()
 
 "-- MISC SETTINGS --------------------------------------------------------------
@@ -45,7 +47,7 @@ set ignorecase
 set smartcase
 let mapleader = "\<Space>"
 let maplocalleader = "\<Space>"
-colorscheme monochrome
+colorscheme monochrome-light
 filetype indent off
 
 set wildignore+=*/tmp/*,*.so,*.swp,*.zip
@@ -174,7 +176,7 @@ function! ToggleRelativeNumber()
 endfunction
 
 function! SendGHCI(file)
-    let bnr = bufwinnr("stack")
+    let bnr = bufwinnr("repl")
     if bnr > 0
       :exe bnr . "wincmd w"
     else
@@ -302,6 +304,9 @@ autocmd FileType haskell nnoremap <silent> <Leader>tt :GhcModType<cr>
 autocmd FileType haskell nnoremap <silent> <Leader>ti :GhcModTypeInsert<cr>
 autocmd FileType haskell nnoremap <silent> <Leader>d  :GhcModSigCodegen<cr>
 autocmd FileType haskell nnoremap <silent> <Leader>c  :GhcModSplitFunCase<cr>
+
+autocmd FileType haskell nnoremap <silent> <Leader>li O<esc>80i-<esc>
+autocmd FileType haskell vnoremap <silent> <Leader>bb :'<,'>!brittany<cr>
 
 autocmd FileType coq nnoremap <Leader>cn :CoqNext<cr>
 autocmd FileType coq nnoremap <Leader>cc :CoqToCursor<cr>
