@@ -19,11 +19,13 @@ Plug 'junegunn/limelight.vim'
 Plug 'junegunn/vim-easy-align'
 Plug 'junegunn/vim-journal'
 Plug 'kcsongor/vim-monochrome'
+Plug 'kcsongor/vim-monochrome-light'
 Plug 'godlygeek/tabular/'
 Plug 'easymotion/vim-easymotion'
 Plug 'ndmitchell/ghcid', { 'rtp': 'plugins/nvim' }
 Plug 'scrooloose/nerdtree'
 Plug 'tpope/vim-fugitive'
+Plug 'autozimu/LanguageClient-neovim', { 'do': ':UpdateRemotePlugins' }
 " ----- * Coq
 Plug 'def-lkb/vimbufsync'
 Plug 'jvoorhis/coq.vim'
@@ -70,6 +72,11 @@ set foldlevel=20
 set sessionoptions+=tabpages,globals
 
 set statusline=[%n]\ %<%.99f\ %h%w%m%r%y%=%-16(\ %c\ %)
+
+silent! set winheight=30
+silent! set winminheight=5
+silent! set winwidth=80
+silent! set winminwidth=10
 
 "-- LINE NUMBERS ---------------------------------------------------------------
 set nu
@@ -325,10 +332,15 @@ xmap ga <Plug>(EasyAlign)
 
 nmap ga <Plug>(EasyAlign)
 
+nnoremap <leader>nf :NERDTreeFind<cr>
+
 nnoremap <leader>a :Ag!<cr>
+nnoremap <leader>f "oyw :Ag! <C-R><C-W><cr>
+vnoremap <leader>f "oy :Ag! <C-R>o<cr>
+nnoremap <leader>F :Ag! <C-R>o<cr>
 nnoremap <leader>bc :BCommits<cr>
 nnoremap <leader>gc :Commits<cr>
-nnoremap <leader>gf :GFiles?<cr>
+"nnoremap <leader>gf :GFiles?<cr>
 nnoremap <leader>bl :BLines<cr>
 nnoremap <leader>gg :GitGutterLineHighlightsToggle<cr>
 nnoremap <leader>gb :Gblame<cr>
@@ -343,10 +355,10 @@ let g:fzf_buffers_jump = 1
 nnoremap <leader>gf :call fzf#vim#ag("module " . expand('<cWORD>'))<cr>
 
 let g:fzf_colors =
-\ { 'fg':      ['fg', 'Comment'],
+\ { 'fg':      ['fg', 'Normal'],
   \ 'bg':      ['bg', 'Normal'],
   \ 'hl':      ['fg', 'String'],
-  \ 'fg+':     ['fg', 'Comment', 'String', 'Normal'],
+  \ 'fg+':     ['fg', 'Normal', 'String', 'Normal'],
   \ 'bg+':     ['bg', 'CursorLine', 'CursorColumn'],
   \ 'hl+':     ['fg', 'Statement'],
   \ 'info':    ['fg', 'PreProc'],
@@ -361,13 +373,6 @@ command! -bang -nargs=* Ag
   \                 <bang>0 ? fzf#vim#with_preview('up:60%')
   \                         : fzf#vim#with_preview('right:50%:hidden', '?'),
   \                 <bang>0)
-
-command! -bang -nargs=* Rg
-  \ call fzf#vim#grep(
-  \   'rg --column --line-number --no-heading --color=always '.shellescape(<q-args>), 1,
-  \   <bang>0 ? fzf#vim#with_preview('up:60%')
-  \           : fzf#vim#with_preview('right:50%:hidden', '?'),
-  \   <bang>0)
 
 function! s:fzf_statusline()
   highlight fzf1 ctermfg=161 ctermbg=251
@@ -413,6 +418,7 @@ function! ToggleConcealQualified()
 endfunction
 
 nnoremap <silent> <leader>cc :silent! call ToggleConcealQualified()<cr>
+nnoremap <silent> <leader>ci mz:g/as <C-R><C-W>/normal yy`z<cr>
 
 autocmd! InsertEnter * :set conceallevel=0
 autocmd! InsertLeave * :set conceallevel=2

@@ -99,3 +99,5 @@ alias shci='stack ghci $(find . -name "*.cabal" | perl -lpe "s/.*\/(.*)\.cabal/\
 alias import='ag --nocolor --nogroup --nofilename "import qualified (\S+)(\s)+as" | perl -lpe "s/ +/ /g" | grep -v "^--" | sort | uniq | fzf | pbcopy'
 alias tags='hasktags . -R --ctags'
 alias vim='nvim'
+alias pglocal='psql -h 0.0.0.0 -p 5432 -U habito'
+alias pgprod='psql -h database.habito.com -U habito_readonly -d habito'
