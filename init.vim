@@ -30,6 +30,8 @@ Plug 'autozimu/LanguageClient-neovim', { 'do': ':UpdateRemotePlugins' }
 Plug 'def-lkb/vimbufsync'
 Plug 'jvoorhis/coq.vim'
 Plug 'the-lambda-church/coquille'
+
+Plug 'kcsongor/vim-monochrome-light'
 call plug#end()
 
 "-- MISC SETTINGS --------------------------------------------------------------
@@ -47,7 +49,7 @@ set ignorecase
 set smartcase
 let mapleader = "\<Space>"
 let maplocalleader = "\<Space>"
-colorscheme monochrome
+colorscheme monochrome-light
 filetype indent off
 
 set wildignore+=*/tmp/*,*.so,*.swp,*.zip
@@ -181,7 +183,7 @@ function! ToggleRelativeNumber()
 endfunction
 
 function! SendGHCI(file)
-    let bnr = bufwinnr("stack")
+    let bnr = bufwinnr("repl")
     if bnr > 0
       :exe bnr . "wincmd w"
     else
@@ -218,7 +220,7 @@ function! SendCORE(file)
 endfunction
 
 function! ReloadGHCI()
-    let bnr = bufwinnr("stack")
+    let bnr = bufwinnr("repl")
     let cur = bufwinnr("%")
     if bnr > 0
       :exe bnr . "wincmd w"
@@ -309,6 +311,9 @@ autocmd FileType haskell nnoremap <silent> <Leader>tt :GhcModType<cr>
 autocmd FileType haskell nnoremap <silent> <Leader>ti :GhcModTypeInsert<cr>
 autocmd FileType haskell nnoremap <silent> <Leader>d  :GhcModSigCodegen<cr>
 autocmd FileType haskell nnoremap <silent> <Leader>c  :GhcModSplitFunCase<cr>
+
+autocmd FileType haskell nnoremap <silent> <Leader>li O<esc>80i-<esc>
+autocmd FileType haskell vnoremap <silent> <Leader>bb :'<,'>!brittany<cr>
 
 autocmd FileType coq nnoremap <Leader>cn :CoqNext<cr>
 autocmd FileType coq nnoremap <Leader>cc :CoqToCursor<cr>
@@ -420,16 +425,23 @@ endfunction
 nnoremap <silent> <leader>cc :silent! call ToggleConcealQualified()<cr>
 nnoremap <silent> <leader>ci mz:g/as <C-R><C-W>/normal yy`z<cr>
 
-autocmd! InsertEnter * :set conceallevel=0
-autocmd! InsertLeave * :set conceallevel=2
+"autocmd! InsertEnter * :set conceallevel=0
+"autocmd! InsertLeave * :set conceallevel=2
 set concealcursor=nvic
 
-"-- HIGHLIGHTS ---------------------------------------------------------------
 
+"-- iPad BINDINGS -------------------------------------------------------------
+nnoremap <leader>w <C-w>
+nnoremap <leader>tn :tabnew<cr>
+nnoremap <leader>ll :tabn<cr>
+nnoremap <leader>hh :tabp<cr>
+
+"-- HIGHLIGHTS ---------------------------------------------------------------
 hi DiffAdd    ctermfg=white   ctermfg=35 ctermbg=232
 hi DiffChange ctermfg=blue    ctermbg=black
 hi DiffDelete ctermfg=1       ctermbg=black
 hi DiffText   ctermfg=yellow  ctermbg=black
 
+"-- HIGHLIGHTS ---------------------------------------------------------------
 nnoremap <silent> <leader>t :silent !tmux send-keys -ttall:zsh.0 "clear && stack build --fast" C-m<cr>
 vnoremap <leader>wed :'<,'>normal we D<cr>

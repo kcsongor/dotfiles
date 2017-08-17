@@ -6,7 +6,7 @@
 # it'll load a random theme each time that oh-my-zsh is loaded.
 # See https://github.com/robbyrussell/oh-my-zsh/wiki/Themes
 export ZSH=~/.oh-my-zsh
-ZSH_THEME="minimal"
+ZSH_THEME="refined"
 
 # Uncomment the following line to use case-sensitive completion.
 # CASE_SENSITIVE="true"
@@ -81,17 +81,22 @@ export SSH_KEY_PATH="~/.ssh/rsa_id"
 #
 # Example aliases
 alias zshconfig="nvim ~/.zshrc"
-# alias ohmyzsh="mate ~/.oh-my-zsh"
 
-export ZSH=/Users/csongor/.oh-my-zsh
 PROMPT='λ '
 export EDITOR='nvim'
-export PURE_PROMPT_SYMBOL='λ'
+export REFINED_PROMPT_SYMBOL='λ'
 
-export PATH=$PATH:~/.local/bin/
-export PATH=$PATH:~/.stack/programs/x86_64-osx/ghc-8.0.2/bin/
+export PATH=/bin/
+export PATH=$PATH:/usr/bin/
+export PATH=$PATH:/usr/sbin/
+export PATH=$PATH:/usr/local/bin/
 export PATH=$PATH:~/.cabal/bin/
+export PATH=$PATH:~/.local/bin/
+export PATH=$PATH:~/.stack/programs/x86_64-osx/ghc-8.2.1/bin/
+export PATH=$PATH:~/.stack/programs/x86_64-osx/ghc-8.0.2/bin/
 export PATH=$PATH:~/habito-web/node_modules/purescript/bin/
+export PATH=$PATH:/Library/TeX/texbin/
+export PATH=$PATH:~/.cargo/bin/
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
