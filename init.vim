@@ -25,7 +25,6 @@ Plug 'easymotion/vim-easymotion'
 Plug 'ndmitchell/ghcid', { 'rtp': 'plugins/nvim' }
 Plug 'scrooloose/nerdtree'
 Plug 'tpope/vim-fugitive'
-Plug 'autozimu/LanguageClient-neovim', { 'do': ':UpdateRemotePlugins' }
 " ----- * Coq
 Plug 'def-lkb/vimbufsync'
 Plug 'jvoorhis/coq.vim'
@@ -49,7 +48,7 @@ set ignorecase
 set smartcase
 let mapleader = "\<Space>"
 let maplocalleader = "\<Space>"
-colorscheme monochrome-light
+colorscheme monochrome
 filetype indent off
 
 set wildignore+=*/tmp/*,*.so,*.swp,*.zip
@@ -232,21 +231,23 @@ endfunction
 
 autocmd FileType haskell nnoremap <silent> <Leader>r :w<cr> :call ReloadGHCI()<cr>
 
-function! EditCabal(path)
-  let cabals = split(globpath(a:path, '*.cabal'), '\n')
+function! EditConfig(path, type)
+  let found  = split(globpath(a:path, '*.' . a:type), '\n')
   let dir    = fnamemodify(a:path, ':h')
   if (dir != '/')
-    if (len(cabals) == 0)
-      call EditCabal(dir)
+    if (len(found) == 0)
+      call EditConfig(dir, a:type)
     else
-      execute 'edit' cabals[0]
+      execute 'edit' found[0]
     endif
   else
-    echo "No cabal file found"
+    echo "No " . a:type . " file found"
   endif
 endfunction
 
-autocmd FileType haskell nnoremap <silent> <leader>ec :call EditCabal(expand('%:p'))<cr>
+
+autocmd FileType haskell nnoremap <silent> <leader>ec :call EditConfig(expand('%:p'), 'cabal')<cr>
+autocmd FileType haskell nnoremap <silent> <leader>ey :call EditConfig(expand('%:p'), 'yaml')<cr>
 
 function! InsertHabitoModuleName(path)
   let mname  = fnamemodify(a:path, ":s?.*/Habito?Habito?:r:gs?/?.?")
