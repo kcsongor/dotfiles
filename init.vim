@@ -3,6 +3,7 @@ call plug#begin('~/.config/nvim/plugged')
 " ----- * Languages
 Plug 'neovimhaskell/haskell-vim'
 " Plug 'parsonsmatt/intero-neovim'
+Plug 'FrigoEU/psc-ide-vim'
 Plug 'eagletmt/ghcmod-vim'
 Plug 'idris-hackers/idris-vim'
 Plug 'neovimhaskell/haskell-vim'
@@ -17,6 +18,7 @@ Plug 'junegunn/gv.vim'
 Plug 'junegunn/vim-easy-align'
 Plug 'kcsongor/vim-monochrome'
 Plug 'kcsongor/vim-monochrome-light'
+Plug 'kcsongor/vim-hs'
 Plug 'godlygeek/tabular/'
 Plug 'easymotion/vim-easymotion'
 Plug 'ndmitchell/ghcid', { 'rtp': 'plugins/nvim' }
@@ -29,6 +31,8 @@ Plug 'jvoorhis/coq.vim'
 Plug 'the-lambda-church/coquille'
 
 Plug 'kcsongor/vim-monochrome-light'
+Plug 'wakatime/vim-wakatime'
+Plug 'owickstrom/vim-colors-paramount'
 call plug#end()
 
 "-- MISC SETTINGS --------------------------------------------------------------
@@ -48,11 +52,12 @@ let mapleader = "\<Space>"
 let maplocalleader = "\<Space>"
 filetype indent off
 
-if strftime("%H") < 20 && strftime("%H") > 8
-  colorscheme monochrome-light
-else
-  colorscheme monochrome
-endif
+colorscheme monochrome
+"if strftime("%H") < 13 && strftime("%H") > 8
+"  colorscheme monochrome-light
+"else
+"  colorscheme monochrome
+"endif
 
 set wildignore+=*/tmp/*,*.so,*.swp,*.zip
 set iskeyword+=-
@@ -108,21 +113,24 @@ inoremap <C-j> <down>
 inoremap <C-k> <up>
 inoremap <C-l> <right>
 
-" Terminal normal mode on C-b
-tnoremap <C-b> <C-\><C-n>
-
-" Window movement in terminal mode
-tnoremap <C-w> <C-\><C-n><C-w>
-
 " Switch tabs
 map <C-l> :tabn<cr>
 map <C-h> :tabp<cr>
 inoremap <C-b><C-l> <C-\><C-n>:tabn<cr>
 inoremap <C-b><C-h> <C-\><C-n>:tabp<cr>
 
-" tmux-like terminal splitting
-tnoremap <C-w><Bar> <C-\><C-n>:vsp term:///bin/zsh<cr>
-tnoremap <C-w>- <C-\><C-n>:sp term:///bin/zsh<cr>
+if (has('nvim'))
+  " tmux-like terminal splitting
+  tnoremap <C-w><Bar> <C-\><C-n>:vsp term:///bin/zsh<cr>
+  tnoremap <C-w>- <C-\><C-n>:sp term:///bin/zsh<cr>
+  " Terminal normal mode on C-b
+  tnoremap <C-b> <C-\><C-n>
+
+  " Window movement in terminal mode
+  tnoremap <C-w> <C-\><C-n><C-w>
+endif
+
+
 nnoremap <C-w><Bar> :vsp<cr>:terminal<cr>
 nnoremap <C-w>- :sp<cr>:terminal<cr>
 
@@ -266,6 +274,9 @@ command! -bang -nargs=* Ag
   \                         : fzf#vim#with_preview('right:50%:hidden', '?'),
   \                 <bang>0)
 
+command! ColEd
+  \ call fzf#run({'source': split(globpath(&rtp, 'colors/*.vim'), "\n"), 'sink': 'e'})
+
 function! s:fzf_statusline()
   highlight fzf1 ctermfg=161 ctermbg=251
   highlight fzf2 ctermfg=23 ctermbg=251
@@ -278,6 +289,7 @@ autocmd! User FzfStatusLine call <SID>fzf_statusline()
 nnoremap <leader>x( di(va(p``
 nnoremap <leader>x[ di[va[p``
 nnoremap <leader>x{ di{va{p``
+vnoremap <leader>( <esc>a)<esc>gvo<esc>i(<esc>%
 
 nnoremap <silent> <leader>ci mz:g/as <C-R><C-W>/normal yy`z<cr>
 
@@ -301,3 +313,30 @@ hi DiffText   ctermfg=yellow  ctermbg=black
 "-- HIGHLIGHTS ---------------------------------------------------------------
 nnoremap <silent> <leader>t :silent !tmux send-keys -ttall:zsh.0 "clear && stack build --fast" C-m<cr>
 vnoremap <leader>wed :'<,'>normal we D<cr>
+
+"-- TEMP PS stuff ---------------------------------------------------------------
+function! PsciBuffer()
+  return max([bufwinnr("pulp"), bufwinnr("repl")])
+endfunction
+
+function! ReloadPsci()
+    let bnr = PsciBuffer()
+    let cur = bufwinnr("%")
+    if bnr > 0
+      :exe bnr . "wincmd w"
+      :startinsert
+      :call feedkeys("\<C-l>:r\<cr>\<Esc>\<C-\>\<C-n>:".cur."wincmd w\<cr>h")
+    endif
+endfunction
+
+function! s:send_psci(file)
+    let bnr = PsciBuffer()
+    if bnr > 0
+      :exe bnr . "wincmd w"
+    else
+      vnew | :call termopen("pulp repl") | :startinsert
+    endif
+endfunction
+
+nnoremap <silent> <leader>pb :call <SID>send_psci(@%)<cr>
+nnoremap <silent> <leader>r :w<cr> :call ReloadPsci()<cr>

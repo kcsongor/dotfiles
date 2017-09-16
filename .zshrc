@@ -81,22 +81,27 @@ export SSH_KEY_PATH="~/.ssh/rsa_id"
 #
 # Example aliases
 alias zshconfig="nvim ~/.zshrc"
+alias :q="exit"
+alias :r="source ~/.zshrc"
 
 PROMPT='λ '
 export EDITOR='nvim'
 export REFINED_PROMPT_SYMBOL='λ'
 
-export PATH=/bin/
-export PATH=$PATH:/usr/bin/
-export PATH=$PATH:/usr/sbin/
-export PATH=$PATH:/usr/local/bin/
-export PATH=$PATH:~/.cabal/bin/
-export PATH=$PATH:~/.local/bin/
-export PATH=$PATH:~/.stack/programs/x86_64-osx/ghc-8.2.1/bin/
-export PATH=$PATH:~/.stack/programs/x86_64-osx/ghc-8.0.2/bin/
-export PATH=$PATH:~/habito-web/node_modules/purescript/bin/
-export PATH=$PATH:/Library/TeX/texbin/
-export PATH=$PATH:~/.cargo/bin/
+export PATH=/bin
+export PATH=$PATH:/Applications/CoqIDE_8.6.1.app/Contents/Resources/bin
+export PATH=$PATH:/Users/cs/Dev/purescript/purescript/.stack-work/install/x86_64-osx/nightly-2017-09-10/8.2.1/bin
+export PATH=$PATH:/usr/local/Cellar/emacs/25.2/bin
+export PATH=$PATH:/usr/bin
+export PATH=$PATH:/usr/sbin
+export PATH=$PATH:/usr/local/bin
+export PATH=$PATH:~/.cabal/bin
+export PATH=$PATH:~/.local/bin
+export PATH=$PATH:~/.stack/programs/x86_64-osx/ghc-8.2.1/bin
+export PATH=$PATH:~/.stack/programs/x86_64-osx/ghc-8.0.2/bin
+export PATH=$PATH:~/habito-web/node_modules/purescript/bin
+export PATH=$PATH:/Library/TeX/texbin
+export PATH=$PATH:~/.cargo/bin
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
@@ -104,5 +109,6 @@ alias shci='stack ghci $(find . -name "*.cabal" | perl -lpe "s/.*\/(.*)\.cabal/\
 alias import='ag --nocolor --nogroup --nofilename "import qualified (\S+)(\s)+as" | perl -lpe "s/ +/ /g" | grep -v "^--" | sort | uniq | fzf | pbcopy'
 alias tags='hasktags . -R --ctags'
 alias vim='nvim'
+alias vi='/usr/local/Cellar/vim/8.0.0596/bin/vim'
 alias pglocal='psql -h 0.0.0.0 -p 5432 -U habito'
 alias pgprod='psql -h database.habito.com -U habito_readonly -d habito'
