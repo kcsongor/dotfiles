@@ -1,12 +1,11 @@
 # If you come from bash you might have to change your $PATH.
-# export PATH=$HOME/bin:/usr/local/bin:$PATH
 
 # Path to your oh-my-zsh installation.
 # Set name of the theme to load. Optionally, if you set this to "random"
 # it'll load a random theme each time that oh-my-zsh is loaded.
 # See https://github.com/robbyrussell/oh-my-zsh/wiki/Themes
 export ZSH=~/.oh-my-zsh
-ZSH_THEME="refined"
+#ZSH_THEME="refined"
 
 # Uncomment the following line to use case-sensitive completion.
 # CASE_SENSITIVE="true"
@@ -36,7 +35,7 @@ DISABLE_LS_COLORS="true"
 # Uncomment the following line if you want to disable marking untracked files
 # under VCS as dirty. This makes repository status check for large repositories
 # much, much faster.
-# DISABLE_UNTRACKED_FILES_DIRTY="true"
+DISABLE_UNTRACKED_FILES_DIRTY="true"
 
 # Uncomment the following line if you want to change the command execution time
 # stamp shown in the history command output.
@@ -90,25 +89,32 @@ export REFINED_PROMPT_SYMBOL='λ'
 
 export PATH=/bin
 export PATH=$PATH:/Applications/CoqIDE_8.6.1.app/Contents/Resources/bin
-export PATH=$PATH:/Users/cs/Dev/purescript/purescript/.stack-work/install/x86_64-osx/nightly-2017-09-10/8.2.1/bin
+export PATH=$PATH:/$HOME/Dev/purescript/purescript/.stack-work/install/x86_64-osx/nightly-2017-09-10/8.2.1/bin
+#export PATH=$PATH:/$HOME/Dev/purescript/purescript/.stack-work/install/x86_64-osx/lts-8.5/8.0.2/bin
+export PATH=$PATH:/usr/local/bin
 export PATH=$PATH:/usr/local/Cellar/emacs/25.2/bin
 export PATH=$PATH:/usr/bin
 export PATH=$PATH:/usr/sbin
-export PATH=$PATH:/usr/local/bin
 export PATH=$PATH:~/.cabal/bin
 export PATH=$PATH:~/.local/bin
+export PATH=$PATH:~/.stack/programs/x86_64-osx/ghc-8.2.2/bin
 export PATH=$PATH:~/.stack/programs/x86_64-osx/ghc-8.2.1/bin
 export PATH=$PATH:~/.stack/programs/x86_64-osx/ghc-8.0.2/bin
+export PATH=$PATH:~/.stack/programs/x86_64-osx/ghc-7.10.3/bin
 export PATH=$PATH:~/habito-web/node_modules/purescript/bin
 export PATH=$PATH:/Library/TeX/texbin
 export PATH=$PATH:~/.cargo/bin
+export PATH=$HOME/bin:/usr/local/bin:$PATH
+export PATH=$PATH:/Library/Frameworks/Mono.framework/Versions/Current/Commands
+export PATH="$HOME/Library/Haskell/bin:$PATH"
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
 alias shci='stack ghci $(find . -name "*.cabal" | perl -lpe "s/.*\/(.*)\.cabal/\1/g" | fzf)'
 alias import='ag --nocolor --nogroup --nofilename "import qualified (\S+)(\s)+as" | perl -lpe "s/ +/ /g" | grep -v "^--" | sort | uniq | fzf | pbcopy'
-alias tags='hasktags . -R --ctags'
+alias tags='fast-tags . -R'
 alias vim='nvim'
 alias vi='/usr/local/Cellar/vim/8.0.0596/bin/vim'
 alias pglocal='psql -h 0.0.0.0 -p 5432 -U habito'
 alias pgprod='psql -h database.habito.com -U habito_readonly -d habito'
+export PATH="/usr/local/opt/libxml2/bin:$PATH"

@@ -6,8 +6,7 @@ Plug 'neovimhaskell/haskell-vim'
 Plug 'FrigoEU/psc-ide-vim'
 Plug 'eagletmt/ghcmod-vim'
 Plug 'idris-hackers/idris-vim'
-Plug 'neovimhaskell/haskell-vim'
-Plug 'raichoo/purescript-vim'
+Plug 'purescript-contrib/purescript-vim'
 " ----- * Misc
 Plug '/usr/local/opt/fzf'
 Plug 'Shougo/vimproc.vim'
@@ -24,6 +23,8 @@ Plug 'easymotion/vim-easymotion'
 Plug 'ndmitchell/ghcid', { 'rtp': 'plugins/nvim' }
 Plug 'scrooloose/nerdtree'
 Plug 'tpope/vim-fugitive'
+Plug 'tpope/vim-rhubarb'
+Plug 'tpope/vim-dispatch'
 Plug 'sjl/gundo.vim'
 " ----- * Coq
 Plug 'def-lkb/vimbufsync'
@@ -52,12 +53,12 @@ let mapleader = "\<Space>"
 let maplocalleader = "\<Space>"
 filetype indent off
 
-colorscheme monochrome
-"if strftime("%H") < 13 && strftime("%H") > 8
+"if strftime("%H") < 19 && strftime("%H") > 10
 "  colorscheme monochrome-light
 "else
 "  colorscheme monochrome
 "endif
+colorscheme monochrome
 
 set wildignore+=*/tmp/*,*.so,*.swp,*.zip
 set iskeyword+=-
@@ -83,7 +84,7 @@ set foldmethod=indent
 set foldlevel=20
 set sessionoptions+=tabpages,globals
 
-set statusline=[%n]\ %<%.99f\ %h%w%m%r%y%=%-16(\ %c\ %)
+set statusline=%r%y\ %=\ %m\ %f
 
 silent! set winheight=30
 silent! set winminheight=5
@@ -113,6 +114,9 @@ inoremap <C-j> <down>
 inoremap <C-k> <up>
 inoremap <C-l> <right>
 
+" select last pasted text
+nnoremap <expr> gb '`[' . strpart(getregtype(), 0, 1) . '`]'
+
 " Switch tabs
 map <C-l> :tabn<cr>
 map <C-h> :tabp<cr>
@@ -126,13 +130,12 @@ if (has('nvim'))
   " Terminal normal mode on C-b
   tnoremap <C-b> <C-\><C-n>
 
+  nnoremap <C-w><Bar> :vsp<cr>:terminal<cr>
+  nnoremap <C-w>- :sp<cr>:terminal<cr>
+
   " Window movement in terminal mode
   tnoremap <C-w> <C-\><C-n><C-w>
 endif
-
-
-nnoremap <C-w><Bar> :vsp<cr>:terminal<cr>
-nnoremap <C-w>- :sp<cr>:terminal<cr>
 
 nnoremap <Leader>uu yypVr-
 nnoremap <Leader>u= yypVr=
@@ -181,8 +184,8 @@ function! LoadCabal()
   endfor
 endfunction
 
-autocmd FileType cabal :call LoadCabal()
-autocmd FileType cabal noremap <LocalLeader>ci :emenu GHC_PACKAGES.
+"autocmd FileType cabal :call LoadCabal()
+"autocmd FileType cabal noremap <LocalLeader>ci :emenu GHC_PACKAGES.
 
 function! RelativeNumber()
     if &number
@@ -226,11 +229,15 @@ xmap ga <Plug>(EasyAlign)
 nmap ga <Plug>(EasyAlign)
 
 nnoremap <leader>nf :NERDTreeFind<cr>
+nnoremap <C-n> :NERDTree<cr>
 
 nnoremap <leader>a :Ag!<cr>
 nnoremap <leader>f "oyw :Ag! <C-R><C-W><cr>
 vnoremap <leader>f "oy :Ag! <C-R>o<cr>
 nnoremap <leader>F :Ag! <C-R>o<cr>
+nnoremap <silent> <leader>ga :silent! call FindAllUsage()<cr>
+nnoremap <C-J> :lnext<cr>
+nnoremap <C-K> :lprev<cr>
 nnoremap <leader>bc :BCommits<cr>
 nnoremap <leader>gc :Commits<cr>
 "nnoremap <leader>gf :GFiles?<cr>
@@ -305,13 +312,13 @@ nnoremap <leader>ll :tabn<cr>
 nnoremap <leader>hh :tabp<cr>
 
 "-- HIGHLIGHTS ---------------------------------------------------------------
-hi DiffAdd    ctermfg=white   ctermfg=35 ctermbg=232
-hi DiffChange ctermfg=blue    ctermbg=black
-hi DiffDelete ctermfg=1       ctermbg=black
-hi DiffText   ctermfg=yellow  ctermbg=black
+hi DiffAdd    ctermfg=NONE    ctermbg=237
+hi DiffChange ctermfg=NONE    ctermbg=NONE
+hi DiffDelete ctermfg=233     ctermbg=NONE
+hi DiffText   ctermfg=yellow  ctermbg=NONE
 
 "-- HIGHLIGHTS ---------------------------------------------------------------
-nnoremap <silent> <leader>t :silent !tmux send-keys -ttall:zsh.0 "clear && stack build --fast" C-m<cr>
+"nnoremap <silent> <leader>t :silent !tmux send-keys -ttall:zsh.0 "clear && stack build --fast" C-m<cr>
 vnoremap <leader>wed :'<,'>normal we D<cr>
 
 "-- TEMP PS stuff ---------------------------------------------------------------
@@ -340,3 +347,11 @@ endfunction
 
 nnoremap <silent> <leader>pb :call <SID>send_psci(@%)<cr>
 nnoremap <silent> <leader>r :w<cr> :call ReloadPsci()<cr>
+
+function! FindAllUsage()
+  call matchdelete(66)
+  hi FoundGroup ctermbg=blue ctermfg=white
+  let wrd = expand('<cword>')
+  Glgrep! -w '<cword>'
+  ldo call matchadd('FoundGroup', '\<' . wrd . '\>', 100, 66)
+endfunction
