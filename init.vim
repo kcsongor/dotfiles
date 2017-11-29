@@ -235,7 +235,6 @@ nnoremap <leader>a :Ag!<cr>
 nnoremap <leader>f "oyw :Ag! <C-R><C-W><cr>
 vnoremap <leader>f "oy :Ag! <C-R>o<cr>
 nnoremap <leader>F :Ag! <C-R>o<cr>
-nnoremap <silent> <leader>ga :silent! call FindAllUsage()<cr>
 nnoremap <C-J> :lnext<cr>
 nnoremap <C-K> :lprev<cr>
 nnoremap <leader>bc :BCommits<cr>
@@ -348,10 +347,13 @@ endfunction
 nnoremap <silent> <leader>pb :call <SID>send_psci(@%)<cr>
 nnoremap <silent> <leader>r :w<cr> :call ReloadPsci()<cr>
 
-function! FindAllUsage()
+nnoremap <silent> <leader>gw :silent! call FindAllUsage(expand('<cword>'))<cr>
+nnoremap <silent> <leader>ga :silent! call FindAllUsage()<cr>
+
+function! FindAllUsage(...)
   call matchdelete(66)
+  let word = 0 < a:0 ? a:1 : inputdialog("Word to search for: ")
   hi FoundGroup ctermbg=blue ctermfg=white
-  let wrd = expand('<cword>')
-  Glgrep! -w '<cword>'
-  ldo call matchadd('FoundGroup', '\<' . wrd . '\>', 100, 66)
+  exe "Glgrep! -w " . shellescape(word)
+  ldo call matchadd('FoundGroup', '\<' . word . '\>', 100, 66)
 endfunction
