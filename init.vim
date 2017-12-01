@@ -34,6 +34,12 @@ Plug 'the-lambda-church/coquille'
 Plug 'kcsongor/vim-monochrome-light'
 Plug 'wakatime/vim-wakatime'
 Plug 'owickstrom/vim-colors-paramount'
+Plug 'brooth/far.vim'
+
+Plug 'mattn/webapi-vim'
+Plug 'mattn/gist-vim'
+Plug 'ToruIwashita/git-switcher.vim'
+Plug 'tpope/vim-commentary'
 call plug#end()
 
 "-- MISC SETTINGS --------------------------------------------------------------
@@ -235,8 +241,6 @@ nnoremap <leader>a :Ag!<cr>
 nnoremap <leader>f "oyw :Ag! <C-R><C-W><cr>
 vnoremap <leader>f "oy :Ag! <C-R>o<cr>
 nnoremap <leader>F :Ag! <C-R>o<cr>
-nnoremap <C-J> :lnext<cr>
-nnoremap <C-K> :lprev<cr>
 nnoremap <leader>bc :BCommits<cr>
 nnoremap <leader>gc :Commits<cr>
 "nnoremap <leader>gf :GFiles?<cr>
@@ -347,13 +351,67 @@ endfunction
 nnoremap <silent> <leader>pb :call <SID>send_psci(@%)<cr>
 nnoremap <silent> <leader>r :w<cr> :call ReloadPsci()<cr>
 
-nnoremap <silent> <leader>gw :silent! call FindAllUsage(expand('<cword>'))<cr>
-nnoremap <silent> <leader>ga :silent! call FindAllUsage()<cr>
+command! -nargs=1 -complete=tag FindAll silent! call FindSomeUsage(<q-args>)
 
-function! FindAllUsage(...)
+nnoremap <silent> <leader>gw :silent! call FindSomeUsage(expand('<cword>'))<cr>
+nnoremap <silent> <leader>ga :silent! call FindSomeUsage()<cr>
+nnoremap <silent> <leader>grw :silent! call ReplaceAll(expand('<cword>'))<cr>
+nnoremap <silent> <leader>gra :silent! call ReplaceAll()<cr>
+
+nnoremap <C-j> :lnext<cr>
+nnoremap <C-k> :lprev<cr>
+
+function! FindSomeUsage(...)
   call matchdelete(66)
   let word = 0 < a:0 ? a:1 : inputdialog("Word to search for: ")
   hi FoundGroup ctermbg=blue ctermfg=white
   exe "Glgrep! -w " . shellescape(word)
   ldo call matchadd('FoundGroup', '\<' . word . '\>', 100, 66)
 endfunction
+
+function! ReplaceAll(...)
+  call matchdelete(66)
+  let word = 0 < a:0 ? a:1 : inputdialog("Word to replace: ")
+  let to = 1 < a:0 ? a:2 : inputdialog("Replace (" . word . ") with: ")
+  exe "Glgrep! -w " . shellescape(word)
+  exe "ldo %s/\\<" . word . "\\>/" . to . "/gI \| update"
+endfunction
+
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" Showing errors
+
+nnoremap <leader>j :cnext<cr>
+nnoremap <leader>k :cprev<cr>
+
+sign define piet text=>> texthl=Error
+
+command! -nargs=0 MarkErrorLines call MarkErrorLines()
+command! -nargs=0 ClearErrors call ClearErrors()
+
+autocmd! QuickFixCmdPost [^l]* call MarkErrorLines()
+
+function! ClearErrors()
+  silent! call matchdelete(50)
+  sign unplace *
+endfunction
+
+function! MarkErrorLines()
+  call ClearErrors()
+  let ps = []
+  for d in getqflist()
+     if (d.lnum > 0)
+       exe ":sign place 2 line=" . d.lnum . " name=piet buffer=" . d.bufnr
+       let len = strlen(split(strpart(getbufline(bufname(d.bufnr), d.lnum)[0], d.col-1))[0])
+       let ps = ps + [[d.lnum, d.col, len]]
+    endif
+  endfor
+  call matchaddpos("Error", ps, 100, 50)
+endfunction
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"" Gist
+
+let g:gist_open_browser_after_post = 1
+let g:gist_post_private = 1
+
