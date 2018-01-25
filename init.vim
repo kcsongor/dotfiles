@@ -2,11 +2,8 @@
 call plug#begin('~/.config/nvim/plugged')
 " ----- * Languages
 Plug 'neovimhaskell/haskell-vim'
-" Plug 'parsonsmatt/intero-neovim'
-Plug 'FrigoEU/psc-ide-vim'
-Plug 'eagletmt/ghcmod-vim'
 Plug 'idris-hackers/idris-vim'
-Plug 'purescript-contrib/purescript-vim'
+Plug 'neomake/neomake'
 " ----- * Misc
 Plug '/usr/local/opt/fzf'
 Plug 'Shougo/vimproc.vim'
@@ -19,51 +16,51 @@ Plug 'kcsongor/vim-monochrome'
 Plug 'kcsongor/vim-monochrome-light'
 Plug 'kcsongor/vim-hs'
 Plug 'godlygeek/tabular/'
-Plug 'easymotion/vim-easymotion'
 Plug 'ndmitchell/ghcid', { 'rtp': 'plugins/nvim' }
 Plug 'scrooloose/nerdtree'
 Plug 'tpope/vim-fugitive'
 Plug 'tpope/vim-rhubarb'
 Plug 'tpope/vim-dispatch'
 Plug 'sjl/gundo.vim'
+Plug 'lervag/vimtex'
 " ----- * Coq
 Plug 'def-lkb/vimbufsync'
 Plug 'jvoorhis/coq.vim'
 Plug 'the-lambda-church/coquille'
 
-Plug 'kcsongor/vim-monochrome-light'
 Plug 'wakatime/vim-wakatime'
-Plug 'owickstrom/vim-colors-paramount'
 Plug 'brooth/far.vim'
 
 Plug 'mattn/webapi-vim'
 Plug 'mattn/gist-vim'
-Plug 'ToruIwashita/git-switcher.vim'
 Plug 'tpope/vim-commentary'
+Plug 'itchyny/vim-cursorword'
+Plug 'haya14busa/incsearch.vim'
+Plug 'ap/vim-buftabline'
+Plug 'itchyny/vim-parenmatch'
 call plug#end()
 
 "-- MISC SETTINGS --------------------------------------------------------------
 syntax on
+set cursorline
+set nowrap
+set hidden
 set splitright
 set splitbelow
 set nobackup
 let &shell = "zsh"
 set noswapfile
-set scrolloff=5
+set scrolloff=0
 set colorcolumn=80
 set autoindent
 set backspace=indent,eol,start
 set ignorecase
 set smartcase
+set lazyredraw
 let mapleader = "\<Space>"
 let maplocalleader = "\<Space>"
 filetype indent off
 
-"if strftime("%H") < 19 && strftime("%H") > 10
-"  colorscheme monochrome-light
-"else
-"  colorscheme monochrome
-"endif
 colorscheme monochrome
 
 set wildignore+=*/tmp/*,*.so,*.swp,*.zip
@@ -73,7 +70,7 @@ autocmd! bufwritepost init.vim source %
 autocmd! bufwritepost haskell.vim source %
 
 " Always return to terminal in insert mode
-autocmd BufWinEnter,WinEnter term://* startinsert
+"autocmd BufWinEnter,WinEnter term://* startinsert
 
 set sts=2
 set et
@@ -90,7 +87,7 @@ set foldmethod=indent
 set foldlevel=20
 set sessionoptions+=tabpages,globals
 
-set statusline=%r%y\ %=\ %m\ %f
+set statusline=%#MyGroup2#\ %n\ %Y\ %#MyGroup0#\ %{fugitive#head()}\ %=\ %m\ %l:%c\ %L\ %#MyGroup1#\ %f
 
 silent! set winheight=30
 silent! set winminheight=5
@@ -101,7 +98,7 @@ silent! set winminwidth=10
 set nu
 set rnu
 au WinLeave * :set nornu
-au WinEnter * :call RelativeNumber()
+"au WinEnter * :call RelativeNumber()
 
 "-- MAPPINGS -------------------------------------------------------------------
 
@@ -115,19 +112,16 @@ inoremap <right> <nop>
 inoremap <up>    <nop>
 inoremap <down>  <nop>
 
-inoremap <C-h> <left>
-inoremap <C-j> <down>
-inoremap <C-k> <up>
-inoremap <C-l> <right>
+nnoremap <C-c><C-d> :Gdiff<cr>
 
 " select last pasted text
 nnoremap <expr> gb '`[' . strpart(getregtype(), 0, 1) . '`]'
 
 " Switch tabs
-map <C-l> :tabn<cr>
-map <C-h> :tabp<cr>
-inoremap <C-b><C-l> <C-\><C-n>:tabn<cr>
-inoremap <C-b><C-h> <C-\><C-n>:tabp<cr>
+map <C-l> :bnext<cr>
+map <C-h> :bprev<cr>
+inoremap <C-b><C-l> <C-\><C-n>:bnext<cr>
+inoremap <C-b><C-h> <C-\><C-n>:bprev<cr>
 
 if (has('nvim'))
   " tmux-like terminal splitting
@@ -216,6 +210,10 @@ autocmd FileType coq nnoremap <Leader>cn :CoqNext<cr>
 autocmd FileType coq nnoremap <Leader>cc :CoqToCursor<cr>
 autocmd FileType coq nnoremap <Leader>cu :CoqUndo<cr>
 
+autocmd FileType tex,bib setlocal spell!
+set spellfile=~/.config/nvim/en.utf-8.add
+set spelllang=en
+
 set diffopt+=iwhite
 set diffexpr=DiffW()
 function! DiffW()
@@ -254,6 +252,19 @@ noremap <C-p> :FZF<cr>
 nnoremap <leader>gt :call fzf#vim#tags(expand('<cword>'), {'options': '--exact --select-1 --exit-0'})<CR>
 nnoremap <leader>t :Tabularize/
 let g:fzf_buffers_jump = 1
+let g:buftabline_numbers = 2
+let g:buftabline_indicators = 1
+let g:buftabline_separators = 0
+nmap <leader>1 <Plug>BufTabLine.Go(1)
+nmap <leader>2 <Plug>BufTabLine.Go(2)
+nmap <leader>3 <Plug>BufTabLine.Go(3)
+nmap <leader>4 <Plug>BufTabLine.Go(4)
+nmap <leader>5 <Plug>BufTabLine.Go(5)
+nmap <leader>6 <Plug>BufTabLine.Go(6)
+nmap <leader>7 <Plug>BufTabLine.Go(7)
+nmap <leader>8 <Plug>BufTabLine.Go(8)
+nmap <leader>9 <Plug>BufTabLine.Go(9)
+nmap <leader>0 <Plug>BufTabLine.Go(10)
 
 nnoremap <leader>gf :call fzf#vim#ag("module " . expand('<cWORD>'))<cr>
 
@@ -263,6 +274,10 @@ function! EditH()
   \ 'sink': 'e',
   \ 'down': '20%'})
 endfunction
+
+hi MyGroup0 ctermbg=233 ctermfg=245
+hi MyGroup1 ctermbg=238 ctermfg=255
+hi MyGroup2 ctermbg=238 ctermfg=255
 
 let g:fzf_colors =
 \ { 'fg':      ['fg', 'Normal'],
@@ -278,6 +293,8 @@ let g:fzf_colors =
   \ 'spinner': ['fg', 'Label'],
   \ 'header':  ['fg', 'Comment'] }
 
+command! -nargs=0 Line :s/-/─/g
+
 command! -bang -nargs=* Ag
   \ call fzf#vim#ag(<q-args>,
   \                 <bang>0 ? fzf#vim#with_preview('up:60%')
@@ -291,7 +308,7 @@ function! s:fzf_statusline()
   highlight fzf1 ctermfg=161 ctermbg=251
   highlight fzf2 ctermfg=23 ctermbg=251
   highlight fzf3 ctermfg=237 ctermbg=251
-  setlocal statusline=%{getcwd()}%#fzf1#\ >\ %#fzf2#fz%#fzf3#f
+  setlocal statusline=%{getcwd()}
 endfunction
 
 autocmd! User FzfStatusLine call <SID>fzf_statusline()
@@ -355,8 +372,8 @@ command! -nargs=1 -complete=tag FindAll silent! call FindSomeUsage(<q-args>)
 
 nnoremap <silent> <leader>gw :silent! call FindSomeUsage(expand('<cword>'))<cr>
 nnoremap <silent> <leader>ga :silent! call FindSomeUsage()<cr>
-nnoremap <silent> <leader>grw :silent! call ReplaceAll(expand('<cword>'))<cr>
-nnoremap <silent> <leader>gra :silent! call ReplaceAll()<cr>
+nnoremap <silent> <leader>grw :silent! call ReplaceAllWord(expand('<cword>'))<cr>
+nnoremap <silent> <leader>gra :silent! call ReplaceAllWord()<cr>
 
 nnoremap <C-j> :lnext<cr>
 nnoremap <C-k> :lprev<cr>
@@ -369,7 +386,7 @@ function! FindSomeUsage(...)
   ldo call matchadd('FoundGroup', '\<' . word . '\>', 100, 66)
 endfunction
 
-function! ReplaceAll(...)
+function! ReplaceAllWord(...)
   call matchdelete(66)
   let word = 0 < a:0 ? a:1 : inputdialog("Word to replace: ")
   let to = 1 < a:0 ? a:2 : inputdialog("Replace (" . word . ") with: ")
@@ -377,6 +394,12 @@ function! ReplaceAll(...)
   exe "ldo %s/\\<" . word . "\\>/" . to . "/gI \| update"
 endfunction
 
+function! ReplaceAll(...)
+  let str = 0 < a:0 ? a:1 : inputdialog("String to replace: ")
+  let to = 1 < a:0 ? a:2 : inputdialog("Replace (" . str . ") with: ")
+  exe "Glgrep! " . shellescape(str)
+  exe "ldo %s/" . str . "/" . to . "/gI \| update"
+endfunction
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Showing errors
@@ -384,7 +407,10 @@ endfunction
 nnoremap <leader>j :cnext<cr>
 nnoremap <leader>k :cprev<cr>
 
+highlight Warning ctermfg=NONE ctermbg=240
+
 sign define piet text=>> texthl=Error
+sign define warning text=>> texthl=Warning
 
 command! -nargs=0 MarkErrorLines call MarkErrorLines()
 command! -nargs=0 ClearErrors call ClearErrors()
@@ -393,21 +419,25 @@ autocmd! QuickFixCmdPost [^l]* call MarkErrorLines()
 
 function! ClearErrors()
   silent! call matchdelete(50)
+  silent! call matchdelete(51)
   sign unplace *
 endfunction
 
 function! MarkErrorLines()
   call ClearErrors()
-  let ps = []
+  let es = []
   for d in getqflist()
      if (d.lnum > 0)
-       exe ":sign place 2 line=" . d.lnum . " name=piet buffer=" . d.bufnr
        let len = strlen(split(strpart(getbufline(bufname(d.bufnr), d.lnum)[0], d.col-1))[0])
-       let ps = ps + [[d.lnum, d.col, len]]
+       let lsign = "piet"
+       let es = es + [[d.lnum, d.col, len]]
+       exe ":sign place 2 line=" . d.lnum . " name=" . lsign . " buffer=" . d.bufnr
     endif
   endfor
-  call matchaddpos("Error", ps, 100, 50)
+  call matchaddpos("Error", es, 100, 50)
 endfunction
+
+nnoremap <silent> ,, :call ClearErrors() \| :call MarkErrorLines() <cr>
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "" Gist
@@ -415,3 +445,47 @@ endfunction
 let g:gist_open_browser_after_post = 1
 let g:gist_post_private = 1
 
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"" Abbreviations
+iabbrev \\|- ⊢
+iabbrev \\|= ⊨
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"" Vimtex
+let g:vimtex_view_method = 'skim'
+let g:vimtex_view_automatic = 1
+
+let g:vimtex_compiler_latexmk = {
+    \ 'backend' : 'nvim',
+    \ 'background' : 1,
+    \ 'build_dir' : '',
+    \ 'callback' : 1,
+    \ 'continuous' : 1,
+    \ 'executable' : 'latexmk',
+    \ 'options' : [
+    \   '-pdf',
+    \   '-verbose',
+    \   '-file-line-error',
+    \   '-synctex=1',
+    \   '-interaction=nonstopmode',
+    \   '-use-make',
+    \ ],
+    \}
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+""
+
+map / <Plug>(incsearch-forward)
+map ? <Plug>(incsearch-backward)
+map g/ <Plug>(incsearch-stay)
+let g:incsearch#auto_nohlsearch = 1
+map n  <Plug>(incsearch-nohl-n)
+map N  <Plug>(incsearch-nohl-N)
+map *  <Plug>(incsearch-nohl-*)
+map #  <Plug>(incsearch-nohl-#)
+map g* <Plug>(incsearch-nohl-g*)
+map g# <Plug>(incsearch-nohl-g#)
+
+let g:loaded_matchparen = 1
+
+let g:gist_update_on_write = 2
