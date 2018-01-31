@@ -117,5 +117,17 @@ alias vim='nvim'
 alias vi='/usr/local/Cellar/vim/8.0.0596/bin/vim'
 export PATH="/usr/local/opt/libxml2/bin:$PATH"
 
+export FZF_DEFAULT_COMMAND='
+  (git ls-tree -r --name-only HEAD ||
+   find . -path "*/\.*" -prune -o -type f -print -o -type l -print |
+      sed s/^..//) 2> /dev/null'
+
 test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
 
+tm() {
+  [[ -n "$TMUX" ]] && change="switch-client" || change="attach-session"
+  if [ $1 ]; then
+    tmux $change -t "$1" 2>/dev/null || (tmux new-session -d -s $1 && tmux $change -t "$1"); return
+  fi
+  session=$(tmux list-sessions -F "#{session_name}" 2>/dev/null | fzf --exit-0) &&  tmux $change -t "$session" || echo "No sessions found."
+}
