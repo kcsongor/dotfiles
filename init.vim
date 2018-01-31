@@ -284,47 +284,6 @@ function! s:fzf_edit_colour()
   setlocal concealcursor=nvic
 endfunction
 
-" Uses the 'songs' binary
-function! s:fzf_pick_song()
-  let songs = split(system("songs"), '\n')
-  let selected = []
-  call fzf#run({
-        \ 'source': songs,
-        \ 'sink*':   function('s:make_playlist'),
-        \ 'options': '--reverse --multi',
-        \ 'down': '40%', })
-  call matchadd('Conceal', '[0-9]\+: ', 100, 67)
-  setlocal conceallevel=2
-  setlocal concealcursor=nvic
-endfunction
-
-inoremap <expr> <c-x><c-o> fzf#complete({
-  \ 'source':  'songs',
-  \ 'reducer': function('<sid>make_playlist'),
-  \ 'options': '--multi --reverse -x +s',
-  \ 'down':    40})
-
-function! s:make_playlist(lines)
-"  let rand = system('echo $RANDOM')
-"  :silent exe 'vsp /var/tmp/vim.songs' . rand
-
-  let nums = []
-  for line in a:lines
-    :call add(nums, split(line, ":")[0])
-  endfor
-
-  let songs = join(nums, " ")
-
-  :call jobstart("songs " . songs)
-
-  ":call append(nums)
-endfunction
-
-function! s:play_song(song)
-  let index = split(a:song, ":")[0]
-  :call system("osascript -e 'tell application \"iTunes\" to play (item ".index." of tracks of library playlist 1)'")
-endfunction
-
 inoremap <expr> <c-x><c-k> fzf#complete('cat /usr/share/dict/words')
 
 function! s:fzf_statusline()
@@ -375,6 +334,9 @@ command! ColEd
 
 command! Song
   \ call s:fzf_pick_song()
+
+command! Artist
+  \ call s:fzf_pick_artist()
 
 command! -bang Colors
   \ call fzf#vim#colors({'left': '15%', 'options': '--reverse --margin 30%,0'}, <bang>0)
@@ -523,5 +485,40 @@ let g:gitgutter_diff_args = '-w'
 
 let $FZF_DEFAULT_COMMAND = 'ag -g ""'
 let g:fzf_buffers_jump = 1
+
+"}}}
+
+"-- iTunes CONTROL {{{
+" Uses the 'songs' binary
+function! s:fzf_pick_song()
+  let songs = split(system("songs list-all"), '\n')
+  let selected = []
+  call fzf#run({
+        \ 'source': songs,
+        \ 'sink*':   function('s:make_playlist'),
+        \ 'options': '--reverse --multi',
+        \ 'down': '40%', })
+  call matchadd('Conceal', '[0-9]\+: ', 100, 67)
+  setlocal conceallevel=2
+  setlocal concealcursor=nvic
+endfunction
+
+function! s:make_playlist(lines)
+  let nums = []
+  for line in a:lines
+    :call add(nums, split(line, ":")[0])
+  endfor
+  :call jobstart("songs play-tracks " . join(nums, " "))
+endfunction
+
+function! s:fzf_pick_artist()
+  let songs = split(system("songs list-artists"), '\n')
+  let selected = []
+  call fzf#run({
+        \ 'source': songs,
+        \ 'sink':   {i -> jobstart("songs play-artist " . i)},
+        \ 'options': '--reverse',
+        \ 'down': '40%', })
+endfunction
 
 "}}}
