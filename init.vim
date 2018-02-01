@@ -338,6 +338,9 @@ command! Song
 command! Artist
   \ call s:fzf_pick_artist()
 
+command! Playlist
+  \ call s:fzf_pick_playlist()
+
 command! -bang Colors
   \ call fzf#vim#colors({'left': '15%', 'options': '--reverse --margin 30%,0'}, <bang>0)
 
@@ -497,7 +500,7 @@ function! s:fzf_pick_song()
         \ 'source': songs,
         \ 'sink*':   function('s:make_playlist'),
         \ 'options': '--reverse --multi',
-        \ 'down': '40%', })
+        \})
   call matchadd('Conceal', '[0-9]\+: ', 100, 67)
   setlocal conceallevel=2
   setlocal concealcursor=nvic
@@ -516,9 +519,19 @@ function! s:fzf_pick_artist()
   let selected = []
   call fzf#run({
         \ 'source': songs,
-        \ 'sink':   {i -> jobstart("songs play-artist " . i)},
+        \ 'sink':   {i -> jobstart("songs play-artist " . shellescape(i))},
         \ 'options': '--reverse',
-        \ 'down': '40%', })
+        \})
+endfunction
+
+function! s:fzf_pick_playlist()
+  let songs = split(system("songs list-playlists"), '\n')
+  let selected = []
+  call fzf#run({
+        \ 'source': songs,
+        \ 'sink':   {i -> jobstart("songs play-playlist " . shellescape(i))},
+        \ 'options': '--reverse',
+        \})
 endfunction
 
 "}}}
