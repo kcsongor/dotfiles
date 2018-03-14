@@ -82,6 +82,9 @@ export SSH_KEY_PATH="~/.ssh/rsa_id"
 alias zshconfig="nvim ~/.zshrc"
 alias :q="exit"
 alias :r="source ~/.zshrc"
+alias my-ghci="$HOME/Dev/ghc/inplace/bin/ghc-stage2 --interactive "
+alias head-ghci="$HOME/Dev/ghc-head/inplace/bin/ghc-stage2 --interactive "
+export PAGER="less"
 
 PROMPT='λ '
 export EDITOR='nvim'

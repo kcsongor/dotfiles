@@ -33,12 +33,16 @@ Plug 'tpope/vim-dispatch'
 Plug 'tpope/vim-fugitive'
 Plug 'tpope/vim-rhubarb'
 Plug 'wakatime/vim-wakatime'
-
+Plug 'jiangmiao/auto-pairs'
+Plug 'francoiscabrol/ranger.vim'
+Plug 'ervandew/supertab'
+Plug 'tomlion/vim-solidity'
+Plug 'justinmk/vim-sneak'
+Plug 'benmills/vimux'
+"Plug 'vim-airline/vim-airline'
 call plug#end()
 "}}}
-
 colorscheme monochrome
-
 "-- GENERAL SETTINGS {{{
 
 syntax on
@@ -54,6 +58,7 @@ set cursorline
 set diffopt+=vertical " vertical split in diff
 set et
 set foldmethod=marker
+autocmd FileType c,hs setlocal foldmethod=indent
 set hidden
 set ignorecase
 set lazyredraw
@@ -70,6 +75,7 @@ set splitright
 set sts=2
 set sw=2
 set wildignore+=*/tmp/*,*.so,*.swp,*.zip,*.class,*.sjsir,*.o,*.hi
+set inccommand=nosplit
 
 filetype indent off
 
@@ -84,7 +90,6 @@ autocmd! bufwritepost init.vim source %
 autocmd! bufwritepost haskell.vim source %
 
 "}}}
-
 "-- STATUS LINE {{{
 
 hi Status0 ctermbg=233 ctermfg=245
@@ -93,16 +98,6 @@ hi Status1 ctermbg=238 ctermfg=255
 set statusline=%#Status1#\ %n\ %Y\ %#Status0#\ %{fugitive#head()}\ %=\ %m\ %l:%c\ %L\ %#Status1#\ %f
 
 "}}}
-
-"-- WINDOW SETTINGS {{{
-
-silent! set winheight=30
-silent! set winminheight=5
-silent! set winwidth=80
-silent! set winminwidth=10
-
-"}}}
-
 "-- MAPPINGS {{{
 
 map <C-l> :bnext<cr>
@@ -112,7 +107,7 @@ nnoremap <C-c><C-d> :Gdiff<cr>
 " select last pasted text
 nnoremap <expr> gb '`[' . strpart(getregtype(), 0, 1) . '`]'
 
-" Terminal-mode mappings
+"---- terminal mode {{{
 if (has('nvim'))
   tnoremap <C-w><Bar> <C-\><C-n>:vsp term:///bin/zsh<cr>
   tnoremap <C-w>- <C-\><C-n>:sp term:///bin/zsh<cr>
@@ -120,6 +115,7 @@ if (has('nvim'))
   nnoremap <C-w>- :sp<cr>:terminal<cr>
   tnoremap <C-w> <C-\><C-n><C-w>
 endif
+"}}}
 
 " Call the pastebin function with selection
 vnoremap <silent> t :call Termbin()<cr>
@@ -136,6 +132,8 @@ nmap <Leader><Tab> :Buffers<cr>
 
 " Toggle relative number
 nmap <Leader>tr :call ToggleRelativeNumber()<CR>
+nnoremap <leader>t :Tabularize/
+nnoremap <leader>th :call TermHere()<cr>
 
 " Cd to current file
 nmap <Leader>cd :cd %:h<cr>
@@ -159,9 +157,20 @@ nnoremap <leader>gg :GitGutterLineHighlightsToggle<cr>
 nnoremap <leader><Tab> :Buffers<cr>
 nnoremap <leader><Enter> :Commands<cr>
 noremap <C-p> :Files<cr>
+noremap <leader>p :GFiles<cr>
 nnoremap <leader>gt :call fzf#vim#tags(expand('<cword>'), {'options': '--exact --select-1 --exit-0'})<CR>
-nnoremap <leader>t :Tabularize/
 
+nnoremap <Left> :vertical resize -1<CR>
+nnoremap <Right> :vertical resize +1<CR>
+nnoremap <Up> :resize -1<CR>
+nnoremap <Down> :resize +1<CR>
+nnoremap <leader>80 :vertical resize 80<CR>
+nnoremap <leader><leader> <C-^>
+
+" locate haskell module under cursor
+nnoremap <leader>gf :call fzf#vim#ag("^module " . expand('<cWORD>'), {'options': '-1 -0'})<cr>
+
+"---- buftabline {{{
 nmap <leader>1 <Plug>BufTabLine.Go(1)
 nmap <leader>2 <Plug>BufTabLine.Go(2)
 nmap <leader>3 <Plug>BufTabLine.Go(3)
@@ -172,23 +181,24 @@ nmap <leader>7 <Plug>BufTabLine.Go(7)
 nmap <leader>8 <Plug>BufTabLine.Go(8)
 nmap <leader>9 <Plug>BufTabLine.Go(9)
 nmap <leader>0 <Plug>BufTabLine.Go(10)
-
+"}}}
+"---- find/replace {{{
 nnoremap <silent> <leader>gw :silent! call FindSomeUsage(expand('<cword>'))<cr>
 nnoremap <silent> <leader>ga :silent! call FindSomeUsage()<cr>
-nnoremap <silent> <leader>grw :silent! call ReplaceAllWord(expand('<cword>'))<cr>
-nnoremap <silent> <leader>gra :silent! call ReplaceAllWord()<cr>
-
-" locate haskell module under cursor
-nnoremap <leader>gf :call fzf#vim#ag("module " . expand('<cWORD>'))<cr>
-
+nnoremap <leader>% :%s/<C-r><C-w>/
+nnoremap <leader>grw :silent! call ReplaceAllWord(expand('<cword>'))<cr>
+nnoremap <leader>gra :silent! call ReplaceAll()<cr>
+"}}}
+"---- error navigation {{{
 nnoremap <C-j> :lnext<cr>
 nnoremap <C-k> :lprev<cr>
 
 nnoremap <leader>j :cnext<cr>
 nnoremap <leader>k :cprev<cr>
 
-nnoremap <silent> ,, :call ClearErrors() \| :call MarkErrorLines() <cr>
-
+"nnoremap <silent> ,, :call ClearErrors() \| :call MarkErrorLines() <cr>
+"}}}
+"---- incsearch {{{
 map / <Plug>(incsearch-forward)
 map ? <Plug>(incsearch-backward)
 map g/ <Plug>(incsearch-stay)
@@ -199,15 +209,18 @@ map *  <Plug>(incsearch-nohl-*)
 map #  <Plug>(incsearch-nohl-#)
 map g* <Plug>(incsearch-nohl-g*)
 map g# <Plug>(incsearch-nohl-g#)
-
+"}}}
+"---- text manipulation {{{
 nnoremap <leader>x( di(va(p``
 nnoremap <leader>x[ di[va[p``
 nnoremap <leader>x{ di{va{p``
 vnoremap <leader>( <esc>a)<esc>gvo<esc>i(<esc>%
-
+"}}}
+"---- coq {{{
 autocmd FileType coq nnoremap <Leader>cn :CoqNext<cr>
 autocmd FileType coq nnoremap <Leader>cc :CoqToCursor<cr>
 autocmd FileType coq nnoremap <Leader>cu :CoqUndo<cr>
+"}}}
 
 " Show highlight group
 nnoremap <leader>hg :echo "hi<" . synIDattr(synID(line("."),col("."),1),"name") . '> trans<'
@@ -215,7 +228,6 @@ nnoremap <leader>hg :echo "hi<" . synIDattr(synID(line("."),col("."),1),"name") 
 \ . synIDattr(synIDtrans(synID(line("."),col("."),1)),"name") . ">"<CR>
 
 "}}}
-
 "-- iPad MAPPINGS {{{
 
 nnoremap <leader>w <C-w>
@@ -224,12 +236,17 @@ nnoremap <leader>ll :tabn<cr>
 nnoremap <leader>hh :tabp<cr>
 
 "}}}
-
 "-- MISC FUNCTIONS {{{
 " Upload selection to termbin
 function! Termbin() range
   echo system('echo '.shellescape(join(getline(a:firstline, a:lastline), "\\n")).'| sed s/\\\\\\\\\$// | nc termbin.com 9999 | pbcopy')
   echo "URL copied to clipboard"
+endfunction
+
+" Open terminal at current file's directory
+function! TermHere()
+    let cwd = expand('%:p:h')
+    silent :call system('tmux split-pane -v -l15 -c ' . cwd)
 endfunction
 
 function! ToggleRelativeNumber()
@@ -240,7 +257,6 @@ function! ToggleRelativeNumber()
     endif
 endfunction
 "}}}
-
 "-- DIFFING {{{
 set diffopt+=iwhite
 set diffexpr=DiffW()
@@ -257,7 +273,6 @@ function! DiffW()
      \ v:fname_in . " " . v:fname_new .  " > " . v:fname_out
 endfunction
 "}}}
-
 "-- FZF {{{
 let g:fzf_colors =
 \ { 'fg':      ['fg', 'Normal'],
@@ -312,7 +327,6 @@ function! s:fzf_neighbouring_files()
 endfunction
 
 "}}}
-
 "-- COMMANDS {{{
 
 " Find argument in rtp
@@ -365,8 +379,10 @@ command! -nargs=0 ClearErrors
 command! -nargs=1 -complete=tag FindAll
   \ silent! call FindSomeUsage(<q-args>)
 
-"}}}
+command! -nargs=1 -complete=tag FindCwd
+  \ silent! call FindSomeUsage(<q-args>, getcwd())
 
+"}}}
 "-- HIGHLIGHTS {{{
 hi DiffAdd    ctermfg=NONE    ctermbg=237
 hi DiffChange ctermfg=NONE    ctermbg=NONE
@@ -378,13 +394,16 @@ hi Warning    ctermfg=NONE    ctermbg=240
 sign define piet text=>> texthl=Error
 sign define warning text=>> texthl=Warning
 "}}}
-
 "-- REFACTORING {{{
 function! FindSomeUsage(...)
   call matchdelete(66)
   let word = 0 < a:0 ? a:1 : inputdialog("Word to search for: ")
   hi FoundGroup ctermbg=blue ctermfg=white
-  exe "Glgrep! -w " . shellescape(word)
+  let in_dir = ""
+  if (a:0 > 1)
+    let in_dir = " -- ".a:2
+  endif
+  exe "Glgrep! -w " . shellescape(word) . in_dir
   ldo call matchadd('FoundGroup', '\<' . word . '\>', 100, 66)
 endfunction
 
@@ -392,18 +411,26 @@ function! ReplaceAllWord(...)
   call matchdelete(66)
   let word = 0 < a:0 ? a:1 : inputdialog("Word to replace: ")
   let to = 1 < a:0 ? a:2 : inputdialog("Replace (" . word . ") with: ")
-  exe "Glgrep! -w " . shellescape(word)
+  let in_dir = ""
+  if (a:0 > 2)
+    let in_dir = " -- ".a:3
+  endif
+  exe "Glgrep! -w " . shellescape(word) . in_dir
   exe "ldo %s/\\<" . word . "\\>/" . to . "/gI \| update"
 endfunction
 
 function! ReplaceAll(...)
   let str = 0 < a:0 ? a:1 : inputdialog("String to replace: ")
   let to = 1 < a:0 ? a:2 : inputdialog("Replace (" . str . ") with: ")
-  exe "Glgrep! " . shellescape(str)
+  let in_dir = ""
+  if (a:0 > 2)
+    let in_dir = " -- ".a:3
+  endif
+  exe "Glgrep! " . shellescape(str) . in_dir
   exe "ldo %s/" . str . "/" . to . "/gI \| update"
 endfunction
-"}}}
 
+"}}}
 "-- ERRORS {{{
 
 autocmd! QuickFixCmdPost [^l]* call MarkErrorLines()
@@ -430,12 +457,10 @@ function! MarkErrorLines()
 endfunction
 
 "}}}
-
 "-- ABBREVIATIONS {{{
 iabbrev \\|- ⊢
 iabbrev \\|= ⊨
 "}}}
-
 "-- LaTeX {{{
 let g:vimtex_view_method = 'skim'
 let g:vimtex_view_automatic = 1
@@ -463,17 +488,15 @@ set spellfile=~/.config/nvim/en.utf-8.add
 set spelllang=en
 
 "}}}
-
 "-- SNIPPETS {{{
 let g:UltiSnipsExpandTrigger       = "<tab>"
+let g:UltiSnips#JumpForwards       = "<tab>"
 
-inoremap <c-j> <esc>:call UltiSnips#JumpForwards()<cr>:startinsert<cr>
 inoremap <c-k> <esc>:call UltiSnips#JumpBackwards()<cr>:startinsert<cr>
 
 " If you want :UltiSnipsEdit to split your window.
 let g:UltiSnipsEditSplit="vertical"
 "}}}
-
 "-- PLUGIN CONFIG {{{
 let g:loaded_matchparen = 1
 
@@ -489,8 +512,17 @@ let g:gitgutter_diff_args = '-w'
 let $FZF_DEFAULT_COMMAND = 'ag -g ""'
 let g:fzf_buffers_jump = 1
 
-"}}}
+let g:AutoPairsFlyMode = 1
+au FileType hs let b:AutoPairs = {'(':')', '[':']', '{':'}','"':'"', '`':'`'}
 
+let g:airline_extensions = ['tabline', 'branch', 'fugitive', 'hunks']
+let g:airline#extensions#tabline#enabled = 1
+let g:airline#extensions#tabline#show_splits = 1
+let g:airline#extensions#tabline#show_buffers = 1
+let g:airline#extensions#hunks#enabled = 1
+let g:airline#extensions#branch#enabled = 1
+let g:airline#extensions#fugitive#enabled = 1
+"}}}
 "-- iTunes CONTROL {{{
 " Uses the 'songs' binary
 function! s:fzf_pick_song()
@@ -533,5 +565,28 @@ function! s:fzf_pick_playlist()
         \ 'options': '--reverse',
         \})
 endfunction
+
+function! s:current_track()
+  let queries = ['album of the current track',
+               \ 'artist of the current track',
+               \ 'name of the current track',
+               \ 'the player position']
+  let query = "osascript -s s -e 'tell application \"iTunes\" to return "
+             \ . join(queries, ' & "----" & ') . "'"
+
+  let song_info = split(split(system(query), "\n")[0][1:-1], "----")
+  return { 'album'  : song_info[0],
+         \ 'artist' : song_info[1],
+         \ 'title'  : song_info[2],
+         \ 'seconds': split(song_info[3], '\.')[0]
+         \ }
+endfunction
+
+function! CurrentTrack()
+  let track = s:current_track()
+  return track.artist . " - " . track.title . " (" . track.album . ")"
+endfunction!
+
+nnoremap <leader>ic :echo CurrentTrack()<cr>
 
 "}}}
