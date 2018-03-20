@@ -671,19 +671,25 @@ function! Includes(fname)
   return ret
 endfunction
 
+function! Pad(s,amt)
+    return a:s . repeat(' ',a:amt - len(a:s))
+endfunction
+
 function! Labels(fname, lab)
-  let red = "\u001b[31m"
-  let reset = "\u001b[0m"
-  let green = "\u001b[32m"
-  let bright_black = "\u001b[33m"
-  let fcontents = map(readfile(a:fname), {key, val -> green.key.reset. ':' . val})
+  let reset = "\e[0m\u001b[0m"
+  let gray = "\u001b[38;5;245m"
+  let green = "\u001b[38;5;35m\e[4m"
+  let white = "\u001b[38;5;250m\e[1m"
+  let lines = readfile(a:fname)
+  let fcontents = map(lines, {key, val -> gray.key.':::'.reset.white.val.reset})
   let found = filter(fcontents, 'v:val =~ "'.a:lab.'{"')
   let found = filter(found, 'v:val !~ "%"')
   let titles = []
   for s in found
     let ln = substitute(s, '\\\w\+{\([^}]\+\)}', "\\1", "")
-    let ln = substitute(ln, '\\label{\([^}]\+\)}', bright_black."(\\1)".reset, "")
-    let titles = add(titles, red.a:fname.reset.':'.ln)
+    let ln = substitute(ln, '\\label{\([^}]\+\)}', reset.green."\\1".reset, "")
+    let [linum, rest] = split(ln, ':::')
+    let titles = add(titles, Pad(gray.a:fname.':'.linum.':', 60).reset.rest)
   endfor
   return {'s_titles': titles, 'lines': found}
 endfunction
@@ -705,7 +711,9 @@ function! JumpToLabels(lab)
   call fzf#run({
     \ 'source' : ss,
     \ 'sink' : function('s:jump_to_section_sink'),
-    \ 'options': '--ansi --reverse --header ":: Select section" --prompt "Section> "',
+    \ 'options': '--ansi --reverse --prompt "'.a:lab.'> "
+                 \ --color fg:255,bg:233,hl:255,fg+:15,bg+:235,hl+:255
+                 \ --color info:250,prompt:255,spinner:108,pointer:35,marker:18',
     \ 'down': '20%'})
 endfunction
 
