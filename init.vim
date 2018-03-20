@@ -675,21 +675,43 @@ function! Pad(s,amt)
     return a:s . repeat(' ',a:amt - len(a:s))
 endfunction
 
+let b:reset = "\u001b[0m"
+let b:green = "\u001b[38;5;35m"
+let b:light_gray = "\u001b[38;5;250m"
+let b:gray = "\u001b[38;5;245m"
+
+function! s:underline(txt)
+  return "\e[4m" . a:txt . "\e[0m"
+endfunction
+
+function! s:bold(txt)
+  return "\e[1m" . a:txt . "\e[0m"
+endfunction
+
+function! s:gray(txt)
+  return b:gray . a:txt . b:reset
+endfunction
+
+function! s:green(txt)
+  return b:green . a:txt . b:reset
+endfunction
+
+function! s:light_gray(txt)
+  return b:light_gray . a:txt . b:reset
+endfunction
+
+
 function! Labels(fname, lab)
-  let reset = "\e[0m\u001b[0m"
-  let gray = "\u001b[38;5;245m"
-  let green = "\u001b[38;5;35m\e[4m"
-  let white = "\u001b[38;5;250m\e[1m"
   let lines = readfile(a:fname)
-  let fcontents = map(lines, {key, val -> gray.key.':::'.reset.white.val.reset})
+  let fcontents = map(lines, {key, val -> s:gray(key.':::').s:bold(s:light_gray(val))})
   let found = filter(fcontents, 'v:val =~ "'.a:lab.'{"')
   let found = filter(found, 'v:val !~ "%"')
   let titles = []
   for s in found
     let ln = substitute(s, '\\\w\+{\([^}]\+\)}', "\\1", "")
-    let ln = substitute(ln, '\\label{\([^}]\+\)}', reset.green."\\1".reset, "")
+    let ln = substitute(ln, '\\label{\([^}]\+\)}', s:underline(s:green("\\1")), "")
     let [linum, rest] = split(ln, ':::')
-    let titles = add(titles, Pad(gray.a:fname.':'.linum.':', 60).reset.rest)
+    let titles = add(titles, s:gray(Pad(EllipsisLeft(a:fname.':'.linum.':', 37),40)).rest)
   endfor
   return {'s_titles': titles, 'lines': found}
 endfunction
@@ -734,5 +756,48 @@ function! s:jump_to_section_sink(line)
   let lnum = ms[1]
   execute "edit +".(lnum+1)." ".file
 endfunction
+
+function! ParseBib(file)
+  let lines = readfile(a:file)
+  let reflines = map(filter(copy(lines), 'v:val =~ "^@"'), {key, val -> substitute(val, '@.\+{\([^,]\+\).\+', '\1', '')})
+  let titles = map(filter(copy(lines), {key, val -> val =~? '\Wtitle\W'}), {key, val -> substitute(val, '^[^{]\+{\(.\+\)},$', '\1', '')})
+  "let authors = map(filter(copy(lines), {key, val -> val =~? '\author\W'}), {key, val -> substitute(val, '^[^{]\+{\(.\+\)},$', '\1', '')})
+  "echo authors
+  let bib = []
+  for i in range(0, len(reflines) - 1)
+    let bib = add(bib, {'ref' : reflines[i], 'title' : titles[i]})
+  endfor
+  return bib
+endfunction
+
+nnoremap <leader>lc :call Cite(expand('~/Dev/haskell/meng/report/bibliography.bib'))<cr>
+
+function! Ellipsis(txt, length)
+  return (a:txt[0:a:length-3] . (len(a:txt) - 3 > a:length ? "..." : ""))
+endfunction
+
+function! EllipsisLeft(txt, length)
+  let m = max([0, (len(a:txt)-a:length)])
+  return (len(a:txt) > a:length ? "..." : "") . a:txt[m: -1]
+endfunction
+
+function! Cite(file)
+  let line = line('.')
+  let refs = ParseBib(a:file)
+  let rows = []
+  let separator = ':'
+  for ref in refs
+    let rows = add(rows, s:green(Pad(s:underline(ref.ref . separator), 50)) . Ellipsis(ref.title, 60))
+  endfor
+  call fzf#run({
+    \ 'source' : rows,
+    \ 'sink': {i -> execute(':normal! a' . "\\cite{" . split(i, separator)[0] . "}")},
+    \ 'options': '--ansi --reverse --prompt "Cite> "
+                 \ --color fg:255,bg:233,hl:255,fg+:15,bg+:235,hl+:255
+                 \ --color info:250,prompt:255,spinner:108,pointer:35,marker:18',
+    \ 'down': '20%'})
+endfunction
+
+
 
 "}}}
