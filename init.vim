@@ -201,7 +201,8 @@ nnoremap <leader>grw :call ReplaceAllWord(expand('<cword>'))<cr>
 nnoremap <leader>gra :call ReplaceAll()<cr>
 
 nnoremap <leader>gS :JumpToSection<cr>
-nnoremap <leader>gs :JumpToSectionAll<cr>
+nnoremap <leader>gs :JumpToLabels section<cr>
+nnoremap <leader>gl :JumpToLabels 
 
 "}}}
 "---- error navigation {{{
@@ -648,8 +649,8 @@ command! -nargs=0 Includes
 command! -nargs=0 JumpToSection
   \ call JumpToSection(expand('%'))
 
-command! -nargs=0 JumpToSectionAll
-  \ call JumpToSectionAll()
+command! -nargs=1 JumpToLabels
+  \ call JumpToLabels(<q-args>)
 
 
 " Rreturns included lhs files in order of inclusion
@@ -670,37 +671,37 @@ function! Includes(fname)
   return ret
 endfunction
 
-function! Sections(fname)
+function! Labels(fname, lab)
   let red = "\u001b[31m"
   let reset = "\u001b[0m"
   let green = "\u001b[32m"
   let bright_black = "\u001b[33m"
   let fcontents = map(readfile(a:fname), {key, val -> green.key.reset. ':' . val})
-  let sections = filter(fcontents, 'v:val =~ "section{"')
-  let sections = filter(sections, 'v:val !~ "%"')
+  let found = filter(fcontents, 'v:val =~ "'.a:lab.'{"')
+  let found = filter(found, 'v:val !~ "%"')
   let titles = []
-  for section in sections
-    let ln = substitute(section, '\\\w\+{\([^}]\+\)}', "\\1", "")
+  for s in found
+    let ln = substitute(s, '\\\w\+{\([^}]\+\)}', "\\1", "")
     let ln = substitute(ln, '\\label{\([^}]\+\)}', bright_black."(\\1)".reset, "")
     let titles = add(titles, red.a:fname.reset.':'.ln)
   endfor
-  return {'section_titles': titles, 'lines': sections}
+  return {'s_titles': titles, 'lines': found}
 endfunction
 
-function! AllSections()
+function! AllLabels(lab)
   let main = fnamemodify(expand('~/Dev/haskell/meng/report/src/Main.lhs'), ':.')
   let includes = extend([main], Includes(main))
   let sections = []
   for inc in includes
-    let sections = extend(sections, Sections(inc).section_titles)
+    let sections = extend(sections, Labels(inc, a:lab).s_titles)
   endfor
   return sections
   " echo includes
 endfunction
 
-function! JumpToSectionAll()
-  let ss = AllSections()
-    "\ 'source': ss.section_titles,
+function! JumpToLabels(lab)
+  let ss = AllLabels(a:lab)
+    "\ 'source': ss.s_titles,
   call fzf#run({
     \ 'source' : ss,
     \ 'sink' : function('s:jump_to_section_sink'),
@@ -710,10 +711,10 @@ endfunction
 
 
 function! JumpToSection(fname)
-  let ss = Sections(a:fname)
-    "\ 'source': ss.section_titles,
+  let ss = Labels(a:fname, 'section')
+    "\ 'source': ss.s_titles,
   call fzf#run({
-    \ 'source' : ss.section_titles,
+    \ 'source' : ss.s_titles,
     \ 'sink' : function('s:jump_to_section_sink'),
     \ 'options': '--ansi --reverse --header ":: Select section" --prompt "Section> "',
     \ 'down': '20%'})
