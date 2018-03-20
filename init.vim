@@ -10,10 +10,12 @@ Plug 'def-lkb/vimbufsync'
 Plug 'godlygeek/tabular/'
 Plug 'haya14busa/incsearch.vim'
 Plug 'idris-hackers/idris-vim'
-Plug 'itchyny/vim-cursorword'
+Plug 'itchyny/vim-cursorword' " underline word under cursor
 Plug 'itchyny/vim-parenmatch'
 Plug 'junegunn/fzf.vim'
 Plug 'junegunn/gv.vim'
+Plug 'junegunn/goyo.vim'
+Plug 'junegunn/vim-peekaboo'
 Plug 'jvoorhis/coq.vim'
 Plug 'kcsongor/vim-hs'
 Plug 'kcsongor/vim-monochrome'
@@ -39,13 +41,19 @@ Plug 'ervandew/supertab'
 Plug 'tomlion/vim-solidity'
 Plug 'justinmk/vim-sneak'
 Plug 'benmills/vimux'
+Plug 'beloglazov/vim-online-thesaurus'
 "Plug 'vim-airline/vim-airline'
 call plug#end()
 "}}}
 colorscheme monochrome
-"-- GENERAL SETTINGS {{{
+if (has('nvim'))
+  syntax on
+else
+  set background=light
+  syntax on
+endif
 
-syntax on
+"-- GENERAL SETTINGS {{{
 
 au WinLeave * :set nornu
 let &shell = "zsh"
@@ -75,7 +83,10 @@ set splitright
 set sts=2
 set sw=2
 set wildignore+=*/tmp/*,*.so,*.swp,*.zip,*.class,*.sjsir,*.o,*.hi
-set inccommand=nosplit
+
+if (has('nvim'))
+  set inccommand=nosplit
+endif
 
 filetype indent off
 
@@ -185,9 +196,13 @@ nmap <leader>0 <Plug>BufTabLine.Go(10)
 "---- find/replace {{{
 nnoremap <silent> <leader>gw :silent! call FindSomeUsage(expand('<cword>'))<cr>
 nnoremap <silent> <leader>ga :silent! call FindSomeUsage()<cr>
-nnoremap <leader>% :%s/<C-r><C-w>/
-nnoremap <leader>grw :silent! call ReplaceAllWord(expand('<cword>'))<cr>
-nnoremap <leader>gra :silent! call ReplaceAll()<cr>
+nnoremap <leader>% :%s/\<<C-r><C-w>\>//gI\|norm``<left><left><left><left><left><left><left><left><left><left>
+nnoremap <leader>grw :call ReplaceAllWord(expand('<cword>'))<cr>
+nnoremap <leader>gra :call ReplaceAll()<cr>
+
+nnoremap <leader>gS :JumpToSection<cr>
+nnoremap <leader>gs :JumpToSectionAll<cr>
+
 "}}}
 "---- error navigation {{{
 nnoremap <C-j> :lnext<cr>
@@ -416,7 +431,7 @@ function! ReplaceAllWord(...)
     let in_dir = " -- ".a:3
   endif
   exe "Glgrep! -w " . shellescape(word) . in_dir
-  exe "ldo %s/\\<" . word . "\\>/" . to . "/gI \| update"
+  exe "ldo %s/\\<" . word . "\\>/" . to . "/gcI \| update"
 endfunction
 
 function! ReplaceAll(...)
@@ -427,7 +442,7 @@ function! ReplaceAll(...)
     let in_dir = " -- ".a:3
   endif
   exe "Glgrep! " . shellescape(str) . in_dir
-  exe "ldo %s/" . str . "/" . to . "/gI \| update"
+  exe "ldo %s/" . str . "/" . to . "/gcI \| update"
 endfunction
 
 "}}}
@@ -492,7 +507,7 @@ set spelllang=en
 let g:UltiSnipsExpandTrigger       = "<tab>"
 let g:UltiSnips#JumpForwards       = "<tab>"
 
-inoremap <c-k> <esc>:call UltiSnips#JumpBackwards()<cr>:startinsert<cr>
+"inoremap <c-k> <esc>:call UltiSnips#JumpBackwards()<cr>:startinsert<cr>
 
 " If you want :UltiSnipsEdit to split your window.
 let g:UltiSnipsEditSplit="vertical"
@@ -522,6 +537,26 @@ let g:airline#extensions#tabline#show_buffers = 1
 let g:airline#extensions#hunks#enabled = 1
 let g:airline#extensions#branch#enabled = 1
 let g:airline#extensions#fugitive#enabled = 1
+
+" GOYO
+function! s:goyo_enter()
+  silent !tmux set status off
+  "silent !tmux list-panes -F '\#F' | grep -q Z || tmux resize-pane -Z
+  set noshowmode
+  set noshowcmd
+  " ...
+endfunction
+
+function! s:goyo_leave()
+  silent !tmux set status on
+  "silent !tmux list-panes -F '\#F' | grep -q Z && tmux resize-pane -Z
+  set showmode
+  set showcmd
+  " ...
+endfunction
+
+autocmd! User GoyoEnter nested call <SID>goyo_enter()
+autocmd! User GoyoLeave nested call <SID>goyo_leave()
 "}}}
 "-- iTunes CONTROL {{{
 " Uses the 'songs' binary
@@ -588,5 +623,107 @@ function! CurrentTrack()
 endfunction!
 
 nnoremap <leader>ic :echo CurrentTrack()<cr>
+
+"}}}
+
+"-- Scratch {{{
+"}}}
+
+"-- Thesis {{{
+
+command! -nargs=0 IncludesRel
+  \ call fzf#run({
+  \ 'source': Includes(expand('%')),
+  \ 'sink': 'e',
+  \ 'options': '--reverse --header ":: Select include" --prompt "Includes> "',
+  \ 'down': '20%'})
+
+command! -nargs=0 Includes
+  \ call fzf#run({
+  \ 'source': Includes(expand('~/Dev/haskell/meng/report/src/Main.lhs')),
+  \ 'sink': 'e',
+  \ 'options': '--reverse --header ":: Select include" --prompt "Includes> "',
+  \ 'down': '20%'})
+
+command! -nargs=0 JumpToSection
+  \ call JumpToSection(expand('%'))
+
+command! -nargs=0 JumpToSectionAll
+  \ call JumpToSectionAll()
+
+
+" Rreturns included lhs files in order of inclusion
+function! Includes(fname)
+  let path = fnamemodify(a:fname, ':.:h')
+  let lhs = split(globpath(path . '/**', '*.lhs'), '\n')
+  let includes = filter(readfile(a:fname), 'v:val =~ "%include .*.lhs"')
+  let ret = []
+  for i in includes
+    let incname = substitute(i, "%include ", "", "g")
+    let incfiles = filter(copy(lhs), 'v:val =~ "' . incname . '"')
+    if (len(incfiles) > 0)
+      let ret = add(ret, incfiles[0])
+      let trans = Includes(incfiles[0])
+      let ret = extend(ret, trans)
+    endif
+  endfor
+  return ret
+endfunction
+
+function! Sections(fname)
+  let red = "\u001b[31m"
+  let reset = "\u001b[0m"
+  let green = "\u001b[32m"
+  let bright_black = "\u001b[33m"
+  let fcontents = map(readfile(a:fname), {key, val -> green.key.reset. ':' . val})
+  let sections = filter(fcontents, 'v:val =~ "section{"')
+  let sections = filter(sections, 'v:val !~ "%"')
+  let titles = []
+  for section in sections
+    let ln = substitute(section, '\\\w\+{\([^}]\+\)}', "\\1", "")
+    let ln = substitute(ln, '\\label{\([^}]\+\)}', bright_black."(\\1)".reset, "")
+    let titles = add(titles, red.a:fname.reset.':'.ln)
+  endfor
+  return {'section_titles': titles, 'lines': sections}
+endfunction
+
+function! AllSections()
+  let main = fnamemodify(expand('~/Dev/haskell/meng/report/src/Main.lhs'), ':.')
+  let includes = extend([main], Includes(main))
+  let sections = []
+  for inc in includes
+    let sections = extend(sections, Sections(inc).section_titles)
+  endfor
+  return sections
+  " echo includes
+endfunction
+
+function! JumpToSectionAll()
+  let ss = AllSections()
+    "\ 'source': ss.section_titles,
+  call fzf#run({
+    \ 'source' : ss,
+    \ 'sink' : function('s:jump_to_section_sink'),
+    \ 'options': '--ansi --reverse --header ":: Select section" --prompt "Section> "',
+    \ 'down': '20%'})
+endfunction
+
+
+function! JumpToSection(fname)
+  let ss = Sections(a:fname)
+    "\ 'source': ss.section_titles,
+  call fzf#run({
+    \ 'source' : ss.section_titles,
+    \ 'sink' : function('s:jump_to_section_sink'),
+    \ 'options': '--ansi --reverse --header ":: Select section" --prompt "Section> "',
+    \ 'down': '20%'})
+endfunction
+
+function! s:jump_to_section_sink(line)
+  let ms = split(a:line, ':')
+  let file = ms[0]
+  let lnum = ms[1]
+  execute "edit +".(lnum+1)." ".file
+endfunction
 
 "}}}
