@@ -200,10 +200,6 @@ nnoremap <leader>% :%s/\<<C-r><C-w>\>//gI\|norm``<left><left><left><left><left><
 nnoremap <leader>grw :call ReplaceAllWord(expand('<cword>'))<cr>
 nnoremap <leader>gra :call ReplaceAll()<cr>
 
-nnoremap <leader>gS :JumpToSection<cr>
-nnoremap <leader>gs :JumpToLabels section<cr>
-nnoremap <leader>gl :JumpToLabels 
-
 "}}}
 "---- error navigation {{{
 nnoremap <C-j> :lnext<cr>
@@ -230,6 +226,7 @@ map g# <Plug>(incsearch-nohl-g#)
 nnoremap <leader>x( di(va(p``
 nnoremap <leader>x[ di[va[p``
 nnoremap <leader>x{ di{va{p``
+"}}
 vnoremap <leader>( <esc>a)<esc>gvo<esc>i(<esc>%
 "}}}
 "---- coq {{{
@@ -237,7 +234,11 @@ autocmd FileType coq nnoremap <Leader>cn :CoqNext<cr>
 autocmd FileType coq nnoremap <Leader>cc :CoqToCursor<cr>
 autocmd FileType coq nnoremap <Leader>cu :CoqUndo<cr>
 "}}}
-
+"---- thesis {{{
+autocmd FileType lhaskell nnoremap <leader>gS :JumpToSection<cr>
+autocmd FileType lhaskell nnoremap <leader>gs :JumpToLabels section<cr>
+autocmd FileType lhaskell nnoremap <leader>gl :JumpToLabels 
+"}}}
 " Show highlight group
 nnoremap <leader>hg :echo "hi<" . synIDattr(synID(line("."),col("."),1),"name") . '> trans<'
 \ . synIDattr(synID(line("."),col("."),0),"name") . "> lo<"
@@ -626,11 +627,29 @@ endfunction!
 nnoremap <leader>ic :echo CurrentTrack()<cr>
 
 "}}}
+"-- THESIS {{{
 
-"-- Scratch {{{
-"}}}
+let g:thesis_main_path = '~/Dev/haskell/meng/report/src/Main.lhs'
+let g:bib_path = '~/Dev/haskell/meng/report/bibliography.bib'
 
-"-- Thesis {{{
+function! s:find_main_lhs()
+  let main = globpath('*', 'Main.lhs')
+  if len(main) > 0
+    return main
+  else
+    return g:thesis_main_path
+  endif
+endfunction
+
+function! s:find_bib()
+  let bib = split(globpath('*', '*.bib'), '\n')
+  if len(bib) > 0
+    return bib[0]
+  else
+    return g:bib_path
+  endif
+endfunction
+
 
 command! -nargs=0 IncludesRel
   \ call fzf#run({
@@ -641,7 +660,7 @@ command! -nargs=0 IncludesRel
 
 command! -nargs=0 Includes
   \ call fzf#run({
-  \ 'source': Includes(expand('~/Dev/haskell/meng/report/src/Main.lhs')),
+  \ 'source': Includes(expand(s:find_main_lhs())),
   \ 'sink': 'e',
   \ 'options': '--reverse --header ":: Select include" --prompt "Includes> "',
   \ 'down': '20%'})
@@ -671,53 +690,29 @@ function! Includes(fname)
   return ret
 endfunction
 
-function! Pad(s,amt)
-    return a:s . repeat(' ',a:amt - len(a:s))
-endfunction
-
-let b:reset = "\u001b[0m"
-let b:green = "\u001b[38;5;35m"
-let b:light_gray = "\u001b[38;5;250m"
-let b:gray = "\u001b[38;5;245m"
-
-function! s:underline(txt)
-  return "\e[4m" . a:txt . "\e[0m"
-endfunction
-
-function! s:bold(txt)
-  return "\e[1m" . a:txt . "\e[0m"
-endfunction
-
-function! s:gray(txt)
-  return b:gray . a:txt . b:reset
-endfunction
-
-function! s:green(txt)
-  return b:green . a:txt . b:reset
-endfunction
-
-function! s:light_gray(txt)
-  return b:light_gray . a:txt . b:reset
-endfunction
-
-
 function! Labels(fname, lab)
+  let separator = ':::'
   let lines = readfile(a:fname)
-  let fcontents = map(lines, {key, val -> s:gray(key.':::').s:bold(s:light_gray(val))})
+  let fcontents = map(lines, {key, val -> s:gray(key.separator).s:bold(s:light_gray(val))})
   let found = filter(fcontents, 'v:val =~ "'.a:lab.'{"')
-  let found = filter(found, 'v:val !~ "%"')
+  let found = filter(found, 'v:val !~ "^%"')
   let titles = []
   for s in found
-    let ln = substitute(s, '\\\w\+{\([^}]\+\)}', "\\1", "")
-    let ln = substitute(ln, '\\label{\([^}]\+\)}', s:underline(s:green("\\1")), "")
-    let [linum, rest] = split(ln, ':::')
-    let titles = add(titles, s:gray(Pad(EllipsisLeft(a:fname.':'.linum.':', 37),40)).rest)
+    let name = matchlist(s, a:lab . '{\([^}]\+\)}')[1]
+    let labels = matchlist(s, '\\label{\([^}]\+\)}')
+    if (len(labels) > 0)
+      let label = ' ' . s:underline(s:green(labels[1]))
+    else
+      let label = ""
+    endif
+    let [linum, rest] = split(s, separator)
+    let titles = add(titles, s:gray(Pad(a:fname.':'.linum.':',40)).name.label)
   endfor
   return {'s_titles': titles, 'lines': found}
 endfunction
 
 function! AllLabels(lab)
-  let main = fnamemodify(expand('~/Dev/haskell/meng/report/src/Main.lhs'), ':.')
+  let main = fnamemodify(expand(s:find_main_lhs()), ':.')
   let includes = extend([main], Includes(main))
   let sections = []
   for inc in includes
@@ -757,12 +752,21 @@ function! s:jump_to_section_sink(line)
   execute "edit +".(lnum+1)." ".file
 endfunction
 
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" Citations
+
 function! ParseBib(file)
   let lines = readfile(a:file)
-  let reflines = map(filter(copy(lines), 'v:val =~ "^@"'), {key, val -> substitute(val, '@.\+{\([^,]\+\).\+', '\1', '')})
-  let titles = map(filter(copy(lines), {key, val -> val =~? '\Wtitle\W'}), {key, val -> substitute(val, '^[^{]\+{\(.\+\)},$', '\1', '')})
-  "let authors = map(filter(copy(lines), {key, val -> val =~? '\author\W'}), {key, val -> substitute(val, '^[^{]\+{\(.\+\)},$', '\1', '')})
-  "echo authors
+  try
+    let reflines = map(filter(copy(lines), 'v:val =~ "^@"'), {key, val -> matchlist(val, '@.\+{\([^,]\+\)')[1]})
+    let titles = map(filter(copy(lines), {key, val -> val =~? '\Wtitle\W'}), {key, val -> matchlist(val, '^[^{]\+{\(.\+\)},$')[1]})
+  catch
+    throw "Invalid .bib file: couldn't parse ref lines or titles: " . v:exception
+  endtry
+  if (len(titles) != len(reflines))
+    throw "Invalid .bib file: open { and closing } must be on the same line"
+    return
+  endif
   let bib = []
   for i in range(0, len(reflines) - 1)
     let bib = add(bib, {'ref' : reflines[i], 'title' : titles[i]})
@@ -770,7 +774,7 @@ function! ParseBib(file)
   return bib
 endfunction
 
-nnoremap <leader>lc :call Cite(expand('~/Dev/haskell/meng/report/bibliography.bib'))<cr>
+nnoremap <leader>lc :call Cite(expand(<sid>find_bib()))<cr>
 
 function! Ellipsis(txt, length)
   return (a:txt[0:a:length-3] . (len(a:txt) - 3 > a:length ? "..." : ""))
@@ -783,21 +787,61 @@ endfunction
 
 function! Cite(file)
   let line = line('.')
-  let refs = ParseBib(a:file)
-  let rows = []
-  let separator = ':'
-  for ref in refs
-    let rows = add(rows, s:green(Pad(s:underline(ref.ref . separator), 50)) . Ellipsis(ref.title, 60))
-  endfor
-  call fzf#run({
-    \ 'source' : rows,
-    \ 'sink': {i -> execute(':normal! a' . "\\cite{" . split(i, separator)[0] . "}")},
-    \ 'options': '--ansi --reverse --prompt "Cite> "
-                 \ --color fg:255,bg:233,hl:255,fg+:15,bg+:235,hl+:255
-                 \ --color info:250,prompt:255,spinner:108,pointer:35,marker:18',
-    \ 'down': '20%'})
+  try
+    let refs = ParseBib(a:file)
+    let rows = []
+    let separator = '>'
+    for ref in refs
+      let rows = add(rows, s:green(Pad(s:underline(ref.ref) . s:black(separator), 60)) . Ellipsis(ref.title, 60))
+    endfor
+    call fzf#run({
+      \ 'source' : rows,
+      \ 'sink': {i -> execute(':normal! a' . "\\cite{" . split(i, separator)[0] . "}")},
+      \ 'options': '--ansi --reverse --prompt "Cite> "
+                   \ --color fg:255,bg:233,hl:255,fg+:15,bg+:235,hl+:255
+                   \ --color info:250,prompt:255,spinner:108,pointer:35,marker:18',
+      \ 'down': '80%'})
+    catch
+      echo v:exception
+    endtry
 endfunction
 
 
+
+"}}}
+"-- FORMATTING {{{
+let g:reset = "\u001b[0m"
+
+function! Pad(s,amt)
+    return a:s . repeat(' ',a:amt - len(a:s))
+endfunction
+
+function! s:underline(txt)
+  return "\e[4m" . a:txt . "\e[0m"
+endfunction
+
+function! s:bold(txt)
+  return "\e[1m" . a:txt . "\e[0m"
+endfunction
+
+function! s:gray(txt)
+  let gray = "\u001b[38;5;245m"
+  return gray . a:txt . g:reset
+endfunction
+
+function! s:green(txt)
+  let green = "\u001b[38;5;35m"
+  return green . a:txt . g:reset
+endfunction
+
+function! s:black(txt)
+  let black = "\u001b[38;5;0m"
+  return black . a:txt . g:reset
+endfunction
+
+function! s:light_gray(txt)
+  let light_gray = "\u001b[38;5;250m"
+  return light_gray . a:txt . g:reset
+endfunction
 
 "}}}
