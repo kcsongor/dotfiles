@@ -672,18 +672,37 @@ command! -nargs=1 JumpToLabels
   \ call JumpToLabels(<q-args>)
 
 
-" Rreturns included lhs files in order of inclusion
+" Takes the path of a '.lhs' file, and returns the .lhs files included inside.
 function! Includes(fname)
+  " Transform the file path
+  " - :.   Reduce file name to be relative to current directory
+  " - :h   Head of the path (i.e. drop the name of the file and just return
+  "        the directory)
   let path = fnamemodify(a:fname, ':.:h')
+  " In 'path', recursively file all .lhs files, and collect them in a list
   let lhs = split(globpath(path . '/**', '*.lhs'), '\n')
+  " Now look into the current file, and file all lines looking like
+  "   %include <something>.lhs
+  " Note that this is an lhs2TeX pragma, and for TeX files this should look
+  " for \input{...} commands instead.
   let includes = filter(readfile(a:fname), 'v:val =~ "%include .*.lhs"')
   let ret = []
+  " Go through all the matching included files...
   for i in includes
+    " this is gnarly af: drop the `%include ` part to get <something>.lhs -
+    " might require extra treatment for .tex files (matchlist is way, see
+    " below)
     let incname = substitute(i, "%include ", "", "g")
+    " Find all the included files that contain <something>.lhs in their name
+    " (usually exactly 1)
     let incfiles = filter(copy(lhs), 'v:val =~ "' . incname . '"')
     if (len(incfiles) > 0)
+      " If file exists, add it to the list of includes
       let ret = add(ret, incfiles[0])
+      " ...then recursively discover the includes of that file too
       let trans = Includes(incfiles[0])
+      " ...and add it to the list. This ensures that the order will respect
+      " the document order
       let ret = extend(ret, trans)
     endif
   endfor
@@ -755,12 +774,19 @@ endfunction
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Citations
 
+" Parse .bib file at location `file`
+" returns a list of records: [{ref : <reference-name>, title : <title>}]
 function! ParseBib(file)
+  " read content of file into memory without loading it into buffer
   let lines = readfile(a:file)
   try
+    " find reference lines, these look like @InProceedings{<reference-name>,
     let reflines = map(filter(copy(lines), 'v:val =~ "^@"'), {key, val -> matchlist(val, '@.\+{\([^,]\+\)')[1]})
+    " find titles: title = {<title>}
     let titles = map(filter(copy(lines), {key, val -> val =~? '\Wtitle\W'}), {key, val -> matchlist(val, '^[^{]\+{\(.\+\)},$')[1]})
   catch
+    " the parser is quite naive - we don't try to be too clever, just throw an
+    " error
     throw "Invalid .bib file: couldn't parse ref lines or titles: " . v:exception
   endtry
   if (len(titles) != len(reflines))
@@ -774,19 +800,21 @@ function! ParseBib(file)
   return bib
 endfunction
 
+" Call the cite command with the bib file
 nnoremap <leader>lc :call Cite(expand(<sid>find_bib()))<cr>
 
+" Shrink text by inserting `...` (on the right)
 function! Ellipsis(txt, length)
   return (a:txt[0:a:length-3] . (len(a:txt) - 3 > a:length ? "..." : ""))
 endfunction
 
+" Shrink text by inserting `...` (on the left)
 function! EllipsisLeft(txt, length)
   let m = max([0, (len(a:txt)-a:length)])
   return (len(a:txt) > a:length ? "..." : "") . a:txt[m: -1]
 endfunction
 
 function! Cite(file)
-  let line = line('.')
   try
     let refs = ParseBib(a:file)
     let rows = []
