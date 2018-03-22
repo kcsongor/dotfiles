@@ -156,7 +156,7 @@ nnoremap <leader>ne :FZFNeigh<cr>
 " fzf
 nnoremap <leader>a :Ag!<cr>
 " fzf with current word
-nnoremap <leader>f "oyw :Ag! <C-R><C-W><cr>
+nnoremap <leader>f "oyaw :Ag! <C-R><C-W><cr>
 " fzf with selection
 vnoremap <leader>f "oy :Ag! <C-R>o<cr>
 " fzf with previous search term
@@ -783,7 +783,7 @@ function! ParseBib(file)
     " find reference lines, these look like @InProceedings{<reference-name>,
     let reflines = map(filter(copy(lines), 'v:val =~ "^@"'), {key, val -> matchlist(val, '@.\+{\([^,]\+\)')[1]})
     " find titles: title = {<title>}
-    let titles = map(filter(copy(lines), {key, val -> val =~? '\Wtitle\W'}), {key, val -> matchlist(val, '^[^{]\+{\(.\+\)},$')[1]})
+    let titles = map(filter(copy(lines), {key, val -> val =~? '\<title\>'}), {key, val -> matchlist(val, '^[^{]\+{\(.\+\)},\?$')[1]})
   catch
     " the parser is quite naive - we don't try to be too clever, just throw an
     " error
