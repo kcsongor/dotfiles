@@ -20,6 +20,7 @@ Plug 'jvoorhis/coq.vim'
 Plug 'kcsongor/vim-hs'
 Plug 'kcsongor/vim-monochrome'
 Plug 'kcsongor/vim-monochrome-light'
+Plug 'ryanpcmcquen/true-monochrome_vim'
 Plug 'lervag/vimtex'
 Plug 'mattn/gist-vim'
 Plug 'mattn/webapi-vim'
@@ -28,7 +29,6 @@ Plug 'neomake/neomake'
 Plug 'neovimhaskell/haskell-vim'
 Plug 'qpkorr/vim-bufkill'
 Plug 'scrooloose/nerdtree'
-Plug 'sjl/gundo.vim'
 Plug 'the-lambda-church/coquille'
 Plug 'tpope/vim-commentary'
 Plug 'tpope/vim-dispatch'
@@ -36,12 +36,12 @@ Plug 'tpope/vim-fugitive'
 Plug 'tpope/vim-rhubarb'
 Plug 'wakatime/vim-wakatime'
 Plug 'jiangmiao/auto-pairs'
-Plug 'francoiscabrol/ranger.vim'
 Plug 'ervandew/supertab'
-Plug 'tomlion/vim-solidity'
 Plug 'justinmk/vim-sneak'
 Plug 'benmills/vimux'
-Plug 'beloglazov/vim-online-thesaurus'
+Plug 'MattesGroeger/vim-bookmarks'
+Plug 'sandeepcr529/Buffet.vim'
+Plug 'majutsushi/tagbar'
 "Plug 'vim-airline/vim-airline'
 call plug#end()
 "}}}
@@ -223,11 +223,17 @@ map g* <Plug>(incsearch-nohl-g*)
 map g# <Plug>(incsearch-nohl-g#)
 "}}}
 "---- text manipulation {{{
-nnoremap <leader>x( di(va(p``
-nnoremap <leader>x[ di[va[p``
-nnoremap <leader>x{ di{va{p``
-"}}
+nnoremap <leader>x( mzdi(va(p`zh
+nnoremap <leader>x[ mzdi[va[p`zh
+nnoremap <leader>x{ mzdi{va{p`zh
+
 vnoremap <leader>( <esc>a)<esc>gvo<esc>i(<esc>%
+vnoremap <leader>[ <esc>a]<esc>gvo<esc>i[<esc>%
+vnoremap <leader>{ <esc>a}<esc>gvo<esc>i{<esc>%
+
+nnoremap <leader>( mzdiwi(<esc>pa)<esc>`zl
+nnoremap <leader>[ mzdiwi[<esc>pa]<esc>`zl
+nnoremap <leader>{ mzdiwi{<esc>pa}<esc>`zl
 "}}}
 "---- coq {{{
 autocmd FileType coq nnoremap <Leader>cn :CoqNext<cr>
@@ -337,7 +343,7 @@ function! s:fzf_neighbouring_files()
         \ 'options': '-m -x +s',
         \ 'window': 'enew', })
   :exe 'setlocal statusline=' . cwd
-  call matchdelete(66)
+  silent! call matchdelete(66)
   call matchadd('Conceal', '.*/', 100, 66)
   setlocal conceallevel=2
   setlocal concealcursor=nvic
@@ -413,7 +419,7 @@ sign define warning text=>> texthl=Warning
 "}}}
 "-- REFACTORING {{{
 function! FindSomeUsage(...)
-  call matchdelete(66)
+  silent! call matchdelete(66)
   let word = 0 < a:0 ? a:1 : inputdialog("Word to search for: ")
   hi FoundGroup ctermbg=blue ctermfg=white
   let in_dir = ""
@@ -421,36 +427,54 @@ function! FindSomeUsage(...)
     let in_dir = " -- ".a:2
   endif
   exe "Glgrep! -w " . shellescape(word) . in_dir
-  ldo call matchadd('FoundGroup', '\<' . word . '\>', 100, 66)
+  silent! ldo call matchadd('FoundGroup', '\<' . word . '\>', 100, 66)
 endfunction
 
 function! ReplaceAllWord(...)
-  call matchdelete(66)
+  silent! call matchdelete(66)
   let word = 0 < a:0 ? a:1 : inputdialog("Word to replace: ")
   let to = 1 < a:0 ? a:2 : inputdialog("Replace (" . word . ") with: ")
-  let in_dir = ""
+
+  " Check for clashes
   if (a:0 > 2)
-    let in_dir = " -- ".a:3
+    silent! call FindSomeUsage(to, a:3)
+  else
+    silent! call FindSomeUsage(to)
   endif
-  exe "Glgrep! -w " . shellescape(word) . in_dir
-  exe "ldo %s/\\<" . word . "\\>/" . to . "/gcI \| update"
+
+  let loclist = getloclist(bufwinnr(bufname('.')))
+
+  if (len(loclist) > 0)
+    echoe to . " already exists"
+    lopen
+    return
+  endif
+  """""""""""""""
+
+  if (a:0 > 2)
+    silent! call FindSomeUsage(word, a:3)
+  else
+    silent! call FindSomeUsage(word)
+  endif
+
+  silent! exe "ldo %s/\\<" . word . "\\>/" . to . "/gcI \| update"
 endfunction
 
-function! ReplaceAll(...)
-  let str = 0 < a:0 ? a:1 : inputdialog("String to replace: ")
-  let to = 1 < a:0 ? a:2 : inputdialog("Replace (" . str . ") with: ")
-  let in_dir = ""
-  if (a:0 > 2)
-    let in_dir = " -- ".a:3
-  endif
-  exe "Glgrep! " . shellescape(str) . in_dir
-  exe "ldo %s/" . str . "/" . to . "/gcI \| update"
-endfunction
+"function! ReplaceAll(...)
+"  let str = 0 < a:0 ? a:1 : inputdialog("String to replace: ")
+"  let to = 1 < a:0 ? a:2 : inputdialog("Replace (" . str . ") with: ")
+"  let in_dir = ""
+"  if (a:0 > 2)
+"    let in_dir = " -- ".a:3
+"  endif
+"  exe "Glgrep! " . shellescape(str) . in_dir
+"  exe "ldo %s/" . str . "/" . to . "/gcI \| update"
+"endfunction
 
 "}}}
 "-- ERRORS {{{
 
-autocmd! QuickFixCmdPost [^l]* call MarkErrorLines()
+"autocmd! QuickFixCmdPost [^l]* call MarkErrorLines()
 
 function! ClearErrors()
   silent! call matchdelete(50)
@@ -515,6 +539,7 @@ let g:UltiSnips#JumpForwards       = "<tab>"
 let g:UltiSnipsEditSplit="vertical"
 "}}}
 "-- PLUGIN CONFIG {{{
+let g:peekaboo_delay=500
 let g:loaded_matchparen = 1
 
 let g:gist_open_browser_after_post = 1
@@ -559,6 +584,38 @@ endfunction
 
 autocmd! User GoyoEnter nested call <SID>goyo_enter()
 autocmd! User GoyoLeave nested call <SID>goyo_leave()
+
+let g:tagbar_type_haskell = {
+    \ 'ctagsbin'  : 'hasktags',
+    \ 'ctagsargs' : '-x -c -o-',
+    \ 'kinds'     : [
+        \  'm:modules:0:1',
+        \  'd:data: 0:1',
+        \  'd_gadt: data gadt:0:1',
+        \  't:type names:0:1',
+        \  'nt:new types:0:1',
+        \  'c:classes:0:1',
+        \  'cons:constructors:1:1',
+        \  'c_gadt:constructor gadt:1:1',
+        \  'c_a:constructor accessors:1:1',
+        \  'ft:function types:1:1',
+        \  'fi:function implementations:0:1',
+        \  'o:others:0:1'
+    \ ],
+    \ 'sro'        : '.',
+    \ 'kind2scope' : {
+        \ 'm' : 'module',
+        \ 'c' : 'class',
+        \ 'd' : 'data',
+        \ 't' : 'type'
+    \ },
+    \ 'scope2kind' : {
+        \ 'module' : 'm',
+        \ 'class'  : 'c',
+        \ 'data'   : 'd',
+        \ 'type'   : 't'
+    \ }
+\ }
 "}}}
 "-- iTunes CONTROL {{{
 " Uses the 'songs' binary
