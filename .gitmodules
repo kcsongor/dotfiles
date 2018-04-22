@@ -1,0 +1,15 @@
+[submodule "vim-thesis-writing"]
+	path = vim-thesis-writing
+	url = git@github.com:kcsongor/vim-thesis-writing.git
+[submodule "vim-refactor"]
+	path = vim-refactor
+	url = git@github.com:kcsongor/vim-refactor.git
+[submodule "vim-itunes"]
+	path = vim-itunes
+	url = git@github.com:kcsongor/vim-itunes.git
+[submodule "vim-buffer-manager"]
+	path = vim-buffer-manager
+	url = git@github.com:kcsongor/vim-buffer-manager.git
+[submodule "vim-hs"]
+	path = vim-hs
+	url = git@github.com:kcsongor/vim-hs.git
