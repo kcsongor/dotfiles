@@ -1,52 +1,54 @@
 "-- PLUGIN MANAGER {{{
 call plug#begin('~/.config/nvim/plugged')
+"Plug 'SirVer/ultisnips'
+"Plug 'brooth/far.vim'
+"Plug 'ervandew/supertab'
+"Plug 'ndmitchell/ghcid', { 'rtp': 'plugins/nvim' }
+"Plug 'neomake/neomake'
+"Plug 'sandeepcr529/Buffet.vim'
+"Plug 'scrooloose/nerdtree'
 Plug '/usr/local/opt/fzf'
+Plug 'MattesGroeger/vim-bookmarks'
 Plug 'Shougo/vimproc.vim'
-Plug 'SirVer/ultisnips'
 Plug 'airblade/vim-gitgutter'
 Plug 'ap/vim-buftabline'
-Plug 'brooth/far.vim'
+Plug 'benmills/vimux'
 Plug 'def-lkb/vimbufsync'
 Plug 'godlygeek/tabular/'
 Plug 'haya14busa/incsearch.vim'
 Plug 'idris-hackers/idris-vim'
 Plug 'itchyny/vim-cursorword' " underline word under cursor
 Plug 'itchyny/vim-parenmatch'
+Plug 'jiangmiao/auto-pairs'
 Plug 'junegunn/fzf.vim'
-Plug 'junegunn/gv.vim'
 Plug 'junegunn/goyo.vim'
+Plug 'junegunn/gv.vim'
 Plug 'junegunn/vim-peekaboo'
+Plug 'justinmk/vim-sneak'
 Plug 'jvoorhis/coq.vim'
+Plug 'kcsongor/vim-buffer-manager'
+Plug 'kcsongor/vim-hs'
+Plug 'kcsongor/vim-itunes'
 Plug 'kcsongor/vim-monochrome'
 Plug 'kcsongor/vim-monochrome-light'
-Plug 'ryanpcmcquen/true-monochrome_vim'
+Plug 'kcsongor/vim-refactor'
+Plug 'kcsongor/vim-thesis-writing'
 Plug 'lervag/vimtex'
+Plug 'majutsushi/tagbar'
 Plug 'mattn/gist-vim'
 Plug 'mattn/webapi-vim'
-Plug 'ndmitchell/ghcid', { 'rtp': 'plugins/nvim' }
-Plug 'neomake/neomake'
+Plug 'mbbill/undotree'
 Plug 'neovimhaskell/haskell-vim'
 Plug 'qpkorr/vim-bufkill'
-Plug 'scrooloose/nerdtree'
 Plug 'the-lambda-church/coquille'
 Plug 'tpope/vim-commentary'
 Plug 'tpope/vim-dispatch'
 Plug 'tpope/vim-fugitive'
+Plug 'tpope/vim-obsession'
 Plug 'tpope/vim-rhubarb'
+Plug 'vim-scripts/LargeFile'
 Plug 'wakatime/vim-wakatime'
-Plug 'jiangmiao/auto-pairs'
-Plug 'ervandew/supertab'
-Plug 'justinmk/vim-sneak'
-Plug 'benmills/vimux'
-Plug 'MattesGroeger/vim-bookmarks'
-Plug 'sandeepcr529/Buffet.vim'
-Plug 'majutsushi/tagbar'
-
-Plug 'kcsongor/vim-hs'
-Plug 'kcsongor/vim-buffer-manager'
-Plug 'kcsongor/vim-thesis-writing'
-Plug 'kcsongor/vim-refactor'
-Plug 'kcsongor/vim-itunes'
+Plug 'hecal3/vim-leader-guide'
 call plug#end()
 "}}}
 colorscheme monochrome
@@ -58,6 +60,11 @@ else
 endif
 
 "-- GENERAL SETTINGS {{{
+
+if has("persistent_undo")
+    set undodir=~/.undodir/
+    set undofile
+endif
 
 au WinLeave * :set nornu
 let &shell = "zsh"
@@ -114,13 +121,24 @@ set statusline=%#Status1#\ %n\ %Y\ %#Status0#\ %{fugitive#head()}\ %=\ %m\ %l:%c
 
 "}}}
 "-- MAPPINGS {{{
-nnoremap <leader>ic :echo CurrentTrack()<cr>
-map <C-l> :bnext<cr>
-map <C-h> :bprev<cr>
-nnoremap <C-c><C-d> :Gdiff<cr>
+" Define prefix dictionary
+let g:lmap =  {}
 
-" select last pasted text
-nnoremap <expr> gb '`[' . strpart(getregtype(), 0, 1) . '`]'
+" Mappings defined by leader-guide
+let g:lmap.G = {
+  \'name' : 'Git',
+  \'s' : ['Gstatus', 'Git Status'],
+  \'p' : ['Gpull',   'Git Pull'],
+  \'u' : ['Gpush',   'Git Push'],
+  \'c' : ['Gcommit', 'Git Commit'],
+  \'w' : ['Gwrite',  'Git Write'],
+  \'b' : ['Gblame',  'Git Blame'],
+  \'d' : ['Gdiff',   'Git Diff'],
+  \}
+
+call leaderGuide#register_prefix_descriptions("<Space>", "g:lmap")
+nnoremap <silent> <leader> :<c-u>LeaderGuide '<Space>'<CR>
+vnoremap <silent> <leader> :<c-u>LeaderGuideVisual '<Space>'<CR>
 
 "---- terminal mode {{{
 if (has('nvim'))
@@ -134,75 +152,133 @@ nnoremap <C-w>- :TermSplitH<cr>
 nnoremap <C-w><Bar> :TermSplitV<cr>
 "}}}
 
-" Call the pastebin function with selection
+"nnoremap <Leader>uq :call Unqualify()<cr>
+"nnoremap <silent> <Leader>cc :silent! call ToggleConcealQualified()<cr>
+map <C-h> :bprev<cr>
+map <C-l> :bnext<cr>
+nmap <Leader><Tab> :Buffers<cr>
+nmap <Leader>cd :cd %:h<cr>
+nmap <Leader>tr :call ToggleRelativeNumber()<CR>
+nmap <Plug>Edit-haskell.vim :Config haskell<CR>
+nmap <silent> <Leader>eh <Plug>Edit-haskell.vim<cr>
+nnoremap <Plug>Edit-vimrc :e `=resolve(expand($MYVIMRC))`<CR>
+nmap <leader>ev <Plug>Edit-vimrc
+nmap <Leader>ma <Plug>BookmarkShowAll
+nmap <Leader>mc <Plug>BookmarkClear
+nmap <Leader>mg <Plug>BookmarkMoveToLine
+nmap <Leader>mi <Plug>BookmarkAnnotate
+nmap <Leader>mj <Plug>BookmarkNext
+nmap <Leader>mjj <Plug>BookmarkMoveDown
+nmap <Leader>mk <Plug>BookmarkPrev
+nmap <Leader>mkk <Plug>BookmarkMoveUp
+nmap <Leader>mm <Plug>BookmarkToggle
+nmap <Leader>mx <Plug>BookmarkClearAll
+nmap <silent> <Leader>sv :so $MYVIMRC<CR>
+nmap [c <Plug>GitGutterPrevHunk
+nmap ]c <Plug>GitGutterNextHunk
+nnoremap <C-c><C-d> :Gdiff<cr>
+nnoremap <Down> :resize +1<CR>
+nnoremap <Leader>80 :vertical resize 80<CR>
+nmap <Leader><Enter> <Plug>Show-all-commands-(FZF)
+nnoremap <Plug>Show-all-commands-(FZF) :Commands<cr>
+nnoremap <Leader><Leader> <C-^>
+nnoremap <Leader><Tab> :Buffers<cr>
+nmap <Leader>F <Plug>Repeat-last-search
+nnoremap <Plug>Repeat-last-search :Ag! <C-R>o<cr>
+nnoremap <Leader>a :Ag!<cr>
+nnoremap <Leader>bc :BCommits<cr>
+nnoremap <Leader>bl :BLines<cr>
+nmap <Leader>f <Plug>Search-word
+nnoremap <Plug>Search-word "oyaw :Ag! <C-R><C-W><cr>
+nnoremap <Leader>gc :Commits<cr>
+nnoremap <Leader>gf :call fzf#vim#ag("^module " . expand('<cWORD>'), {'options': '-1 -0'})<cr>
+nmap <Leader>gg :GitGutterLineHighlightsToggle<cr>
+nmap <Leader>gp <Plug>GitGutterPreviewHunk
+nmap <Leader>gu <Plug>GitGutterUndoHunk
+nnoremap <Leader>gt :call fzf#vim#tags(expand('<cword>'), {'options': '--exact --select-1 --exit-0'})<CR>
+nnoremap <Leader>ne :FZFNeigh<cr>
+nnoremap <Leader>t :Tabularize/
+nnoremap <Leader>uf :UndotreeFocus<cr>
+nnoremap <Leader>ut :UndotreeToggle<cr>
+nnoremap <Left> :vertical resize +1<CR>
+nnoremap <Right> :vertical resize -1<CR>
+nnoremap <Up> :resize -1<CR>
+nnoremap <expr> gb '`[' . strpart(getregtype(), 0, 1) . '`]'
+nnoremap <leader>ic :echo CurrentTrack()<cr>
+nnoremap <silent> --h "=HaskellModuleHeader()<CR>:0put =<cr>
+nnoremap <silent> <C-c><C-c> :Hoogle <C-R><C-W><cr>
+nnoremap <silent> <Leader>R :VimuxRunLastCommand<cr>
+nmap <silent> <Leader>ec <Plug>Edit-cabal-file
+nmap <silent> <Leader>ey <Plug>Edit-stack.yaml
+nmap <Leader>gi <Plug>Jump-to-imports
+nnoremap <silent> <Leader>ho :call Hoogle()<cr>
+nnoremap <silent> <Leader>ii :call <SID>info(<SID>ident_under_cursor())<cr>
+nnoremap <silent> <Leader>ik :call <SID>kind(<SID>paren_operator(<SID>ident_under_cursor()), 0)<cr>
+nnoremap <silent> <Leader>ir :call <SID>kind("Rep " . <SID>paren_operator(<SID>ident_under_cursor()), 1)<cr>
+nnoremap <silent> <Leader>it :call <SID>type(<SID>paren_operator(<SID>ident_under_cursor()))<cr>
+nnoremap <silent> <Leader>lf :w<cr> :call LoadGhci()<cr>
+nnoremap <silent> <Leader>li O<esc>80i-<esc>
+nnoremap <silent> <Leader>mi :call <SID>insert_module_name()<cr>
+nnoremap <silent> <Leader>r :call ReloadGHCI()<cr>
+nmap <silent> <Leader>sb <Plug>Open-REPL
+nmap <silent> <Leader>sc <Plug>View-core
+nmap <silent> <Leader>tt <Plug>Type-under-cursor
+nmap <silent> <Leader>wm <Plug>Identifier-information
+noremap <C-p> :Files<cr>
+noremap <Leader>ia :call ImportModule()<cr>
+noremap <Leader>la :call AddLanguagePragma()<cr>
+noremap <Leader>oa :call AddOption()<cr>
+noremap <Leader>p :GFiles<cr>
+nmap <Leader>si <Plug>Sort-imports
+noremap <Plug>Sort-imports mz:Tabularize/as<CR>vip:sort<CR>`z
+nmap <Leader>sl <Plug>Sort-language-pragmas
+noremap <Plug>Sort-language-pragmas mzgg:Tabularize/#-}<CR>vip:!sort\|uniq<CR>`z
+noremap <silent> <Leader>ioa :call AddOptionGHCI()<cr>
+vnoremap <Leader>f "oy :Ag! <C-R>o<cr>
+vnoremap <silent> <Leader>bb :'<,'>!brittany<cr>
+vnoremap <silent> <Leader>sb :call Eval()<cr>
 vnoremap <silent> t :call Termbin()<cr>
 
-" edit/reload .vimrc
-nmap <silent> <leader>ev :e `=resolve(expand($MYVIMRC))`<CR>
-nmap <silent> <leader>sv :so $MYVIMRC<CR>
 
-" Edit haskell.vim
-nmap <silent> <leader>eh :Config haskell<CR>
-
-" Buffer switch
-nmap <Leader><Tab> :Buffers<cr>
-
-" Toggle relative number
-nmap <Leader>tr :call ToggleRelativeNumber()<CR>
-nnoremap <leader>t :Tabularize/
-
-" Cd to current file
-nmap <Leader>cd :cd %:h<cr>
-
-" Locate file in nerdtree
-nnoremap <leader>nf :NERDTreeFind<cr>
-" Show neighbouring files in fzf
-nnoremap <leader>ne :FZFNeigh<cr>
-" fzf
-nnoremap <leader>a :Ag!<cr>
-" fzf with current word
-nnoremap <leader>f "oyaw :Ag! <C-R><C-W><cr>
-" fzf with selection
-vnoremap <leader>f "oy :Ag! <C-R>o<cr>
-" fzf with previous search term
-nnoremap <leader>F :Ag! <C-R>o<cr>
-nnoremap <leader>bc :BCommits<cr>
-nnoremap <leader>gc :Commits<cr>
-nnoremap <leader>bl :BLines<cr>
-nnoremap <leader>gg :GitGutterLineHighlightsToggle<cr>
-nnoremap <leader><Tab> :Buffers<cr>
-nnoremap <leader><Enter> :Commands<cr>
-noremap <C-p> :Files<cr>
-noremap <leader>p :GFiles<cr>
-nnoremap <leader>gt :call fzf#vim#tags(expand('<cword>'), {'options': '--exact --select-1 --exit-0'})<CR>
-
-nnoremap <Left> :vertical resize -1<CR>
-nnoremap <Right> :vertical resize +1<CR>
-nnoremap <Up> :resize -1<CR>
-nnoremap <Down> :resize +1<CR>
-nnoremap <leader>80 :vertical resize 80<CR>
-nnoremap <leader><leader> <C-^>
-
-" locate haskell module under cursor
-nnoremap <leader>gf :call fzf#vim#ag("^module " . expand('<cWORD>'), {'options': '-1 -0'})<cr>
+function! s:my_displayfunc()
+    let g:leaderGuide#displayname =
+    \ substitute(g:leaderGuide#displayname, '\c<cr>$', '', '')
+    let g:leaderGuide#displayname = 
+    \ substitute(g:leaderGuide#displayname, '^<Plug>', '', '')
+    let g:leaderGuide#displayname = 
+    \ substitute(g:leaderGuide#displayname, '-', ' ', 'g')
+endfunction
+let g:leaderGuide_displayfunc = [function("s:my_displayfunc")]
 
 "---- buftabline {{{
-nmap <leader>1 <Plug>BufTabLine.Go(1)
-nmap <leader>2 <Plug>BufTabLine.Go(2)
-nmap <leader>3 <Plug>BufTabLine.Go(3)
-nmap <leader>4 <Plug>BufTabLine.Go(4)
-nmap <leader>5 <Plug>BufTabLine.Go(5)
-nmap <leader>6 <Plug>BufTabLine.Go(6)
-nmap <leader>7 <Plug>BufTabLine.Go(7)
-nmap <leader>8 <Plug>BufTabLine.Go(8)
-nmap <leader>9 <Plug>BufTabLine.Go(9)
-nmap <leader>0 <Plug>BufTabLine.Go(10)
+nmap <leader>0 <Plug>Jump-to-buffer-10
+nmap <Plug>Jump-to-buffer-10 <Plug>BufTabLine.Go(10)
+nmap <leader>1 <Plug>Jump-to-buffer-1
+nmap <Plug>Jump-to-buffer-1 <Plug>BufTabLine.Go(1)
+nmap <leader>2 <Plug>Jump-to-buffer-2
+nmap <Plug>Jump-to-buffer-2 <Plug>BufTabLine.Go(2)
+nmap <leader>3 <Plug>Jump-to-buffer-3
+nmap <Plug>Jump-to-buffer-3 <Plug>BufTabLine.Go(3)
+nmap <leader>4 <Plug>Jump-to-buffer-4
+nmap <Plug>Jump-to-buffer-4 <Plug>BufTabLine.Go(4)
+nmap <leader>5 <Plug>Jump-to-buffer-5
+nmap <Plug>Jump-to-buffer-5 <Plug>BufTabLine.Go(5)
+nmap <leader>6 <Plug>Jump-to-buffer-6
+nmap <Plug>Jump-to-buffer-6 <Plug>BufTabLine.Go(6)
+nmap <leader>7 <Plug>Jump-to-buffer-7
+nmap <Plug>Jump-to-buffer-7 <Plug>BufTabLine.Go(7)
+nmap <leader>8 <Plug>Jump-to-buffer-8
+nmap <Plug>Jump-to-buffer-8 <Plug>BufTabLine.Go(8)
+nmap <leader>9 <Plug>Jump-to-buffer-9
+nmap <Plug>Jump-to-buffer-9 <Plug>BufTabLine.Go(9)
 "}}}
 "---- find/replace {{{
 nnoremap <silent> <leader>gw :silent! call FindSomeUsage(expand('<cword>'))<cr>
 nnoremap <silent> <leader>ga :silent! call FindSomeUsage()<cr>
-nnoremap <leader>% :%s/\<<C-r><C-w>\>//gI\|norm``<left><left><left><left><left><left><left><left><left><left>
-nnoremap <leader>< :'<,'>s/\<<C-r><C-w>\>//gI\|norm``<left><left><left><left><left><left><left><left><left><left>
+nmap <leader>% <Plug>Replace-word-in-file
+nnoremap <Plug>Replace-word-in-file :%s/\<<C-r><C-w>\>//gI\|norm``<left><left><left><left><left><left><left><left><left><left>
+nmap <leader>< <Plug>Replace-word-in-last-selection
+nnoremap <Plug>Replace-word-in-last-selection :'<,'>s/\<<C-r><C-w>\>//gI\|norm``<left><left><left><left><left><left><left><left><left><left>
 nnoremap <leader>grw :call ReplaceAllWord(expand('<cword>'))<cr>
 nnoremap <leader>gra :call ReplaceAll()<cr>
 
@@ -229,33 +305,45 @@ map g* <Plug>(incsearch-nohl-g*)
 map g# <Plug>(incsearch-nohl-g#)
 "}}}
 "---- text manipulation {{{
-nnoremap <leader>x( mzdi(va(p`zh
-nnoremap <leader>x[ mzdi[va[p`zh
-nnoremap <leader>x{ mzdi{va{p`zh
+nmap <leader>x( <Plug>Delete-surrounding-(
+nnoremap <Plug>Delete-surrounding-( mzdi(va(p`zh
+nmap <leader>x[ <Plug>Delete-surrounding-[
+nnoremap <Plug>Delete-surrounding-[ mzdi[va[p`zh
+nmap <leader>x{ <Plug>Delete-surrounding-{
+nnoremap <Plug>Delete-surrounding-{ mzdi{va{p`zh
 
 vnoremap <leader>( <esc>a)<esc>gvo<esc>i(<esc>%
 vnoremap <leader>[ <esc>a]<esc>gvo<esc>i[<esc>%
 vnoremap <leader>{ <esc>a}<esc>gvo<esc>i{<esc>%
 
-nnoremap <leader>( mzdiwi(<esc>pa)<esc>`zl
-nnoremap <leader>[ mzdiwi[<esc>pa]<esc>`zl
-nnoremap <leader>{ mzdiwi{<esc>pa}<esc>`zl
+nmap <leader>( <Plug>Surround-word-with-(
+nnoremap <Plug>Surround-word-with-( mzdiwi(<esc>pa)<esc>`zl
+nmap <leader>[ <Plug>Surround-word-with-[
+nnoremap <Plug>Surround-word-with-[ mzdiwi[<esc>pa]<esc>`zl
+nmap <leader>{ <Plug>Surround-word-with-{
+nnoremap <Plug>Surround-word-with-{ mzdiwi{<esc>pa}<esc>`zl
 "}}}
 "---- coq {{{
-autocmd FileType coq nnoremap <Leader>cn :CoqNext<cr>
-autocmd FileType coq nnoremap <Leader>cc :CoqToCursor<cr>
-autocmd FileType coq nnoremap <Leader>cu :CoqUndo<cr>
+autocmd FileType coq nnoremap <buffer> <Leader>cn :CoqNext<cr>
+autocmd FileType coq nnoremap <buffer> <Leader>cc :CoqToCursor<cr>
+autocmd FileType coq nnoremap <buffer> <Leader>cu :CoqUndo<cr>
 "}}}
 "---- thesis {{{
-autocmd FileType lhaskell nnoremap <leader>gS :JumpToSection<cr>
-autocmd FileType lhaskell nnoremap <leader>gs :JumpToLabels section<cr>
-autocmd FileType lhaskell nnoremap <leader>gl :JumpToLabels 
-autocmd FileType lhaskell nnoremap <leader>lc :AddCitationFZF<cr>
+autocmd FileType lhaskell nnoremap <buffer> <leader>gS :JumpToSection<cr>
+autocmd FileType lhaskell nnoremap <buffer> <leader>gs :JumpToLabels section<cr>
+autocmd FileType lhaskell nnoremap <buffer> <leader>gl :JumpToLabels 
+autocmd FileType lhaskell nnoremap <buffer> <leader>lc :AddCitationFZF<cr>
 "}}}
 " Show highlight group
 nnoremap <leader>hg :echo "hi<" . synIDattr(synID(line("."),col("."),1),"name") . '> trans<'
 \ . synIDattr(synID(line("."),col("."),0),"name") . "> lo<"
 \ . synIDattr(synIDtrans(synID(line("."),col("."),1)),"name") . ">"<CR>
+
+" Text objects
+omap ic <Plug>GitGutterTextObjectInnerPending
+omap ac <Plug>GitGutterTextObjectOuterPending
+xmap ic <Plug>GitGutterTextObjectInnerVisual
+xmap ac <Plug>GitGutterTextObjectOuterVisual
 
 "}}}
 "-- iPad MAPPINGS {{{
@@ -296,6 +384,12 @@ function! ToggleRelativeNumber()
     else
         set rnu
     endif
+endfunction
+
+function! StartRefactor()
+endfunction
+
+function! StopRefactor()
 endfunction
 "}}}
 "-- DIFFING {{{
@@ -564,4 +658,6 @@ let g:tagbar_type_haskell = {
         \ 'type'   : 't'
     \ }
 \ }
+
+let g:undotree_WindowLayout = 3
 "}}}
