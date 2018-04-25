@@ -124,17 +124,66 @@ set statusline=%#Status1#\ %n\ %Y\ %#Status0#\ %{fugitive#head()}\ %=\ %m\ %l:%c
 " Define prefix dictionary
 let g:lmap =  {}
 
-" Mappings defined by leader-guide
-let g:lmap.G = {
+let g:lmap.g = {
   \'name' : 'Git',
-  \'s' : ['Gstatus', 'Git Status'],
-  \'p' : ['Gpull',   'Git Pull'],
-  \'u' : ['Gpush',   'Git Push'],
-  \'c' : ['Gcommit', 'Git Commit'],
-  \'w' : ['Gwrite',  'Git Write'],
-  \'b' : ['Gblame',  'Git Blame'],
-  \'d' : ['Gdiff',   'Git Diff'],
+  \'s'  : ['Gstatus',             'Git Status'],
+  \'p'  : ['Gpull',               'Git Pull'],
+  \'u'  : ['Gpush',               'Git Push'],
+  \'c'  : ['Gcommit',             'Git Commit'],
+  \'w'  : ['Gwrite',              'Git Write'],
+  \'b'  : ['Gblame',              'Git Blame'],
+  \'d'  : ['Gdiff',               'Git Diff'],
+  \'g'  : ['GitGutterLineHighlightsToggle',  'Highlight changes'],
+  \'a'  : ['GitGutterStageHunk',  'Stage hunk'],
+  \'l'  : { 'name' : 'Log',
+            \'b' : ['BCommits', 'Buffer log (fzf)'],
+            \'c' : ['Commits',  'Log (fzf)'],
+            \'l' : ['GV',       'Log'],
+          \},
+  \'h'  : { 'name' : 'Hunk',
+            \'p' : ['GitGutterPreviewHunk', 'Preview hunk'],
+            \'u' : ['GitGutterUndoHunk', 'Undo hunk'],
+          \},
+  \'r'  : { 'name' : 'Refactoring',
+          \'f' : ['FindInGit', 'Find...'],
+          \}
   \}
+
+nmap <leader>grr <Plug>Rename-"cword"
+nnoremap <Plug>Rename-"cword" :call ReplaceAllWord(expand('<cword>'))<cr>
+
+let g:lmap.j = {
+  \'name' : 'Jump',
+  \'m'  : ['JumpHaskellModule',    'Haskell module'],
+  \'i'  : ['JumpToImports',        'Imports'],
+  \}
+
+command! JumpToImports
+  \ call JumpToImports()
+
+command! JumpHaskellModule
+  \ call fzf#vim#ag("^module " . expand('<cWORD>'), {'options': '-1 -0'})
+
+command! FZFTags
+  \ call fzf#vim#tags(expand('<cword>'), {'options': '--exact --select-1 --exit-0'})
+
+"---- find/replace {{{
+nmap <leader>grw <Plug>Find-"cword"
+nnoremap <Plug>Find-"cword" :silent! call FindSomeUsage(expand('<cword>'))<cr>
+
+command! FindInGit
+  \ call FindSomeUsage()
+
+"nmap <leader>ga <Plug>Find-in-git...
+"nnoremap <Plug>Find-word-in-git... :silent! FindInGit<cr>
+nmap <leader>% <Plug>Replace-"cword"-in-file
+nnoremap <Plug>Replace-"cword"-in-file :%s/\<<C-r><C-w>\>//gI\|norm``<left><left><left><left><left><left><left><left><left><left>
+nmap <leader>< <Plug>Replace-"word"-in-last-selection
+nnoremap <Plug>Replace-"word"-in-last-selection :'<,'>s/\<<C-r><C-w>\>//gI\|norm``<left><left><left><left><left><left><left><left><left><left>
+"nnoremap <leader>gra :call ReplaceAll()<cr>
+
+nmap <Leader>] <Plug>Tags-(cword)
+nnoremap <Plug>Tags-(cword) :FZFTags<cr>
 
 call leaderGuide#register_prefix_descriptions("<Space>", "g:lmap")
 nnoremap <silent> <leader> :<c-u>LeaderGuide '<Space>'<CR>
@@ -152,13 +201,17 @@ nnoremap <C-w>- :TermSplitH<cr>
 nnoremap <C-w><Bar> :TermSplitV<cr>
 "}}}
 
+"}}}
+"nnoremap <Leader>bc :BCommits<cr>
+"nnoremap <Leader>gc :Commits<cr>
 "nnoremap <Leader>uq :call Unqualify()<cr>
 "nnoremap <silent> <Leader>cc :silent! call ToggleConcealQualified()<cr>
 map <C-h> :bprev<cr>
 map <C-l> :bnext<cr>
 nmap <Leader><Tab> :Buffers<cr>
 nmap <Leader>cd :cd %:h<cr>
-nmap <Leader>tr :call ToggleRelativeNumber()<CR>
+nmap <Leader>tr <Plug>Toggle-relative-numbers
+nmap <Plug>Toggle-relative-numbers :call ToggleRelativeNumber()<CR>
 nmap <Plug>Edit-haskell.vim :Config haskell<CR>
 nmap <silent> <Leader>eh <Plug>Edit-haskell.vim<cr>
 nnoremap <Plug>Edit-vimrc :e `=resolve(expand($MYVIMRC))`<CR>
@@ -186,16 +239,9 @@ nnoremap <Leader><Tab> :Buffers<cr>
 nmap <Leader>F <Plug>Repeat-last-search
 nnoremap <Plug>Repeat-last-search :Ag! <C-R>o<cr>
 nnoremap <Leader>a :Ag!<cr>
-nnoremap <Leader>bc :BCommits<cr>
 nnoremap <Leader>bl :BLines<cr>
-nmap <Leader>f <Plug>Search-word
-nnoremap <Plug>Search-word "oyaw :Ag! <C-R><C-W><cr>
-nnoremap <Leader>gc :Commits<cr>
-nnoremap <Leader>gf :call fzf#vim#ag("^module " . expand('<cWORD>'), {'options': '-1 -0'})<cr>
-nmap <Leader>gg :GitGutterLineHighlightsToggle<cr>
-nmap <Leader>gp <Plug>GitGutterPreviewHunk
-nmap <Leader>gu <Plug>GitGutterUndoHunk
-nnoremap <Leader>gt :call fzf#vim#tags(expand('<cword>'), {'options': '--exact --select-1 --exit-0'})<CR>
+nmap <Leader>f <Plug>Search-word-(cWORD)
+nnoremap <Plug>Search-word-(cWORD) "oyaw :Ag! <C-R><C-W><cr>
 nnoremap <Leader>ne :FZFNeigh<cr>
 nnoremap <Leader>t :Tabularize/
 nnoremap <Leader>uf :UndotreeFocus<cr>
@@ -210,7 +256,6 @@ nnoremap <silent> <C-c><C-c> :Hoogle <C-R><C-W><cr>
 nnoremap <silent> <Leader>R :VimuxRunLastCommand<cr>
 nmap <silent> <Leader>ec <Plug>Edit-cabal-file
 nmap <silent> <Leader>ey <Plug>Edit-stack.yaml
-nmap <Leader>gi <Plug>Jump-to-imports
 nnoremap <silent> <Leader>ho :call Hoogle()<cr>
 nnoremap <silent> <Leader>ii :call <SID>info(<SID>ident_under_cursor())<cr>
 nnoremap <silent> <Leader>ik :call <SID>kind(<SID>paren_operator(<SID>ident_under_cursor()), 0)<cr>
@@ -247,6 +292,10 @@ function! s:my_displayfunc()
     \ substitute(g:leaderGuide#displayname, '^<Plug>', '', '')
     let g:leaderGuide#displayname = 
     \ substitute(g:leaderGuide#displayname, '-', ' ', 'g')
+    let g:leaderGuide#displayname = 
+    \ substitute(g:leaderGuide#displayname, 'cWORD', expand('<cWORD>'), 'g')
+    let g:leaderGuide#displayname = 
+    \ substitute(g:leaderGuide#displayname, 'cword', expand('<cword>'), 'g')
 endfunction
 let g:leaderGuide_displayfunc = [function("s:my_displayfunc")]
 
@@ -272,23 +321,12 @@ nmap <Plug>Jump-to-buffer-8 <Plug>BufTabLine.Go(8)
 nmap <leader>9 <Plug>Jump-to-buffer-9
 nmap <Plug>Jump-to-buffer-9 <Plug>BufTabLine.Go(9)
 "}}}
-"---- find/replace {{{
-nnoremap <silent> <leader>gw :silent! call FindSomeUsage(expand('<cword>'))<cr>
-nnoremap <silent> <leader>ga :silent! call FindSomeUsage()<cr>
-nmap <leader>% <Plug>Replace-word-in-file
-nnoremap <Plug>Replace-word-in-file :%s/\<<C-r><C-w>\>//gI\|norm``<left><left><left><left><left><left><left><left><left><left>
-nmap <leader>< <Plug>Replace-word-in-last-selection
-nnoremap <Plug>Replace-word-in-last-selection :'<,'>s/\<<C-r><C-w>\>//gI\|norm``<left><left><left><left><left><left><left><left><left><left>
-nnoremap <leader>grw :call ReplaceAllWord(expand('<cword>'))<cr>
-nnoremap <leader>gra :call ReplaceAll()<cr>
-
-"}}}
 "---- error navigation {{{
 nnoremap <C-j> :lnext<cr>
 nnoremap <C-k> :lprev<cr>
 
-nnoremap <leader>j :cnext<cr>
-nnoremap <leader>k :cprev<cr>
+"nnoremap <leader>j :cnext<cr>
+"nnoremap <leader>k :cprev<cr>
 
 "nnoremap <silent> ,, :call ClearErrors() \| :call MarkErrorLines() <cr>
 "}}}
@@ -504,11 +542,6 @@ command! -nargs=0 ClearErrors
 
 "}}}
 "-- HIGHLIGHTS {{{
-hi DiffAdd    ctermfg=NONE    ctermbg=237
-hi DiffChange ctermfg=NONE    ctermbg=NONE
-hi DiffDelete ctermfg=233     ctermbg=NONE
-hi DiffText   ctermfg=yellow  ctermbg=NONE
-
 hi Warning    ctermfg=NONE    ctermbg=240
 
 sign define piet text=>> texthl=Error
@@ -593,6 +626,10 @@ let g:buftabline_indicators = 1
 let g:buftabline_separators = 0
 let g:gitgutter_diff_args = '-w'
 
+let g:gitgutter_sign_added = '+'
+let g:gitgutter_sign_modified = '~'
+let g:gitgutter_sign_removed = '-'
+
 let $FZF_DEFAULT_COMMAND = 'ag -g ""'
 let g:fzf_buffers_jump = 1
 
@@ -610,19 +647,22 @@ let g:airline#extensions#fugitive#enabled = 1
 " GOYO
 function! s:goyo_enter()
   silent !tmux set status off
-  "silent !tmux list-panes -F '\#F' | grep -q Z || tmux resize-pane -Z
+  silent !tmux list-panes -F '\#F' | grep -q Z || tmux resize-pane -Z
   set noshowmode
   set noshowcmd
-  " ...
+  GitGutterEnable
 endfunction
 
 function! s:goyo_leave()
   silent !tmux set status on
-  "silent !tmux list-panes -F '\#F' | grep -q Z && tmux resize-pane -Z
+  silent !tmux list-panes -F '\#F' | grep -q Z && tmux resize-pane -Z
   set showmode
   set showcmd
-  " ...
 endfunction
+
+let g:goyo_width="120"
+let g:goyo_height="100%"
+let g:goyo_linenr=1
 
 autocmd! User GoyoEnter nested call <SID>goyo_enter()
 autocmd! User GoyoLeave nested call <SID>goyo_leave()
