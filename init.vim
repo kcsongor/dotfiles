@@ -1,3 +1,4 @@
+" TODO: global .gitignore
 "-- PLUGIN MANAGER {{{
 call plug#begin('~/.config/nvim/plugged')
 "Plug 'SirVer/ultisnips'
@@ -11,7 +12,6 @@ Plug '/usr/local/opt/fzf'
 Plug 'MattesGroeger/vim-bookmarks'
 Plug 'Shougo/vimproc.vim'
 Plug 'airblade/vim-gitgutter'
-Plug 'ap/vim-buftabline'
 Plug 'benmills/vimux'
 Plug 'def-lkb/vimbufsync'
 Plug 'godlygeek/tabular/'
@@ -46,7 +46,6 @@ Plug 'tpope/vim-dispatch'
 Plug 'tpope/vim-fugitive'
 Plug 'tpope/vim-obsession'
 Plug 'tpope/vim-rhubarb'
-Plug 'vim-scripts/LargeFile'
 Plug 'wakatime/vim-wakatime'
 Plug 'hecal3/vim-leader-guide'
 call plug#end()
@@ -60,6 +59,8 @@ else
 endif
 
 "-- GENERAL SETTINGS {{{
+
+set exrc
 
 if has("persistent_undo")
     set undodir=~/.undodir/
@@ -117,7 +118,9 @@ autocmd! bufwritepost haskell.vim source %
 hi Status0 ctermbg=233 ctermfg=245
 hi Status1 ctermbg=238 ctermfg=255
 
-set statusline=%#Status1#\ %n\ %Y\ %#Status0#\ %{fugitive#head()}\ %=\ %m\ %l:%c\ %L\ %#Status1#\ %f
+hi FoundGroup ctermfg=blue ctermbg=NONE cterm=underline
+
+set statusline=%#Status1#\ %n\ %Y\ %#Status0#\ %{fugitive#head()}\ %=\ %{refactor#refactoring_mode()}\ %m\ %l:%c\ %L\ %#Status1#\ %f
 
 "}}}
 "-- MAPPINGS {{{
@@ -145,12 +148,13 @@ let g:lmap.g = {
             \'u' : ['GitGutterUndoHunk', 'Undo hunk'],
           \},
   \'r'  : { 'name' : 'Refactoring',
-          \'f' : ['FindInGit', 'Find...'],
+          \'f' : ['FindAllPrompt', 'Find...'],
+          \'t' : ['ToggleRefactoring', 'Toggle refactoring mode'],
           \}
   \}
 
 nmap <leader>grr <Plug>Rename-"cword"
-nnoremap <Plug>Rename-"cword" :call ReplaceAllWord(expand('<cword>'))<cr>
+nnoremap <Plug>Rename-"cword" :call refactor#replace_all_word(expand('<cword>'))<cr>
 
 let g:lmap.j = {
   \'name' : 'Jump',
@@ -169,10 +173,7 @@ command! FZFTags
 
 "---- find/replace {{{
 nmap <leader>grw <Plug>Find-"cword"
-nnoremap <Plug>Find-"cword" :silent! call FindSomeUsage(expand('<cword>'))<cr>
-
-command! FindInGit
-  \ call FindSomeUsage()
+nnoremap <Plug>Find-"cword" :silent! call refactor#find_all_tab(expand('<cword>'))<cr>
 
 "nmap <leader>ga <Plug>Find-in-git...
 "nnoremap <Plug>Find-word-in-git... :silent! FindInGit<cr>
@@ -206,8 +207,8 @@ nnoremap <C-w><Bar> :TermSplitV<cr>
 "nnoremap <Leader>gc :Commits<cr>
 "nnoremap <Leader>uq :call Unqualify()<cr>
 "nnoremap <silent> <Leader>cc :silent! call ToggleConcealQualified()<cr>
-map <C-h> :bprev<cr>
-map <C-l> :bnext<cr>
+map <C-l> :tabnext<cr>
+map <C-h> :tabprev<cr>
 nmap <Leader><Tab> :Buffers<cr>
 nmap <Leader>cd :cd %:h<cr>
 nmap <Leader>tr <Plug>Toggle-relative-numbers
@@ -284,7 +285,6 @@ vnoremap <silent> <Leader>bb :'<,'>!brittany<cr>
 vnoremap <silent> <Leader>sb :call Eval()<cr>
 vnoremap <silent> t :call Termbin()<cr>
 
-
 function! s:my_displayfunc()
     let g:leaderGuide#displayname =
     \ substitute(g:leaderGuide#displayname, '\c<cr>$', '', '')
@@ -299,31 +299,12 @@ function! s:my_displayfunc()
 endfunction
 let g:leaderGuide_displayfunc = [function("s:my_displayfunc")]
 
-"---- buftabline {{{
-nmap <leader>0 <Plug>Jump-to-buffer-10
-nmap <Plug>Jump-to-buffer-10 <Plug>BufTabLine.Go(10)
-nmap <leader>1 <Plug>Jump-to-buffer-1
-nmap <Plug>Jump-to-buffer-1 <Plug>BufTabLine.Go(1)
-nmap <leader>2 <Plug>Jump-to-buffer-2
-nmap <Plug>Jump-to-buffer-2 <Plug>BufTabLine.Go(2)
-nmap <leader>3 <Plug>Jump-to-buffer-3
-nmap <Plug>Jump-to-buffer-3 <Plug>BufTabLine.Go(3)
-nmap <leader>4 <Plug>Jump-to-buffer-4
-nmap <Plug>Jump-to-buffer-4 <Plug>BufTabLine.Go(4)
-nmap <leader>5 <Plug>Jump-to-buffer-5
-nmap <Plug>Jump-to-buffer-5 <Plug>BufTabLine.Go(5)
-nmap <leader>6 <Plug>Jump-to-buffer-6
-nmap <Plug>Jump-to-buffer-6 <Plug>BufTabLine.Go(6)
-nmap <leader>7 <Plug>Jump-to-buffer-7
-nmap <Plug>Jump-to-buffer-7 <Plug>BufTabLine.Go(7)
-nmap <leader>8 <Plug>Jump-to-buffer-8
-nmap <Plug>Jump-to-buffer-8 <Plug>BufTabLine.Go(8)
-nmap <leader>9 <Plug>Jump-to-buffer-9
-nmap <Plug>Jump-to-buffer-9 <Plug>BufTabLine.Go(9)
-"}}}
 "---- error navigation {{{
-nnoremap <C-j> :lnext<cr>
-nnoremap <C-k> :lprev<cr>
+"nnoremap <C-j> :lnext<cr>
+"nnoremap <C-k> :lprev<cr>
+
+nnoremap <expr> <C-j> &diff ? ']c' : ':lnext<cr>'
+nnoremap <expr> <C-k> &diff ? '[c' : ':lprev<cr>'
 
 "nnoremap <leader>j :cnext<cr>
 "nnoremap <leader>k :cprev<cr>
@@ -424,11 +405,6 @@ function! ToggleRelativeNumber()
     endif
 endfunction
 
-function! StartRefactor()
-endfunction
-
-function! StopRefactor()
-endfunction
 "}}}
 "-- DIFFING {{{
 set diffopt+=iwhite
@@ -508,7 +484,8 @@ command! -nargs=1 Config
   \ call fzf#run({
   \ 'source': reverse(split(globpath(&rtp, "*/" . <q-args> . "*"), "\n")),
   \ 'sink': 'e',
-  \ 'down': '20%'})
+  \ 'down': '20%',
+  \ 'options' : '-1 -0'})
 
 command! -bang -nargs=* Ag
   \ call fzf#vim#ag(<q-args>,
@@ -621,9 +598,6 @@ let g:gist_open_browser_after_post = 1
 let g:gist_post_private = 1
 let g:gist_update_on_write = 2
 
-let g:buftabline_numbers = 2
-let g:buftabline_indicators = 1
-let g:buftabline_separators = 0
 let g:gitgutter_diff_args = '-w'
 
 let g:gitgutter_sign_added = '+'
@@ -636,13 +610,54 @@ let g:fzf_buffers_jump = 1
 let g:AutoPairsFlyMode = 1
 au FileType hs let b:AutoPairs = {'(':')', '[':']', '{':'}','"':'"', '`':'`'}
 
-let g:airline_extensions = ['tabline', 'branch', 'fugitive', 'hunks']
-let g:airline#extensions#tabline#enabled = 1
-let g:airline#extensions#tabline#show_splits = 1
-let g:airline#extensions#tabline#show_buffers = 1
-let g:airline#extensions#hunks#enabled = 1
-let g:airline#extensions#branch#enabled = 1
-let g:airline#extensions#fugitive#enabled = 1
+:set tabline=%!MyTabLine()
+
+function! MyTabLabel(n)
+  let buflist = tabpagebuflist(a:n)
+  let winnr = tabpagewinnr(a:n)
+  return get(g:tabnames, a:n, bufname(buflist[winnr - 1]))
+endfunction
+
+if (!exists('g:tabnames'))
+  let g:tabnames = {}
+endif
+
+nnoremap <C-w>, :call RenameCurrentTab()<cr>
+
+command! -nargs=* RenameCurrentTab
+  \ call RenameCurrentTab(<q-args>)
+
+function! RenameCurrentTab(...)
+  let to = 0 < a:0 ? a:1 : inputdialog("Rename tab to: ", get(g:tabnames, tabpagenr(), ""))
+  if (to == "")
+    silent! call remove(g:tabnames, tabpagenr())
+  else
+    let g:tabnames[tabpagenr()] = to
+  endif
+endfunction
+
+function! MyTabLine()
+  let s = ''
+  for i in range(tabpagenr('$'))
+    " select the highlighting
+    if i + 1 == tabpagenr()
+      let s .= '%#TabLineSel#'
+    else
+      let s .= '%#TabLine#'
+    endif
+
+    " set the tab page number (for mouse clicks)
+    let s .= '%' . (i + 1) . 'T'
+
+    " the label is made by MyTabLabel()
+    let s .= ' %{MyTabLabel(' . (i + 1) . ')} '
+  endfor
+
+  " after the last tab fill with TabLineFill and reset tab page nr
+  let s .= '%#TabLineFill#%T'
+
+  return s
+endfunction
 
 " GOYO
 function! s:goyo_enter()
@@ -701,3 +716,6 @@ let g:tagbar_type_haskell = {
 
 let g:undotree_WindowLayout = 3
 "}}}
+
+
+set secure
