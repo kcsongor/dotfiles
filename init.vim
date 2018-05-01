@@ -1,4 +1,4 @@
-""PLUGINS {{{
+"PLUGINS {{{1
 call plug#begin('~/.config/nvim/plugged')
 Plug '/usr/local/opt/fzf'
 Plug 'Shougo/vimproc.vim'
@@ -32,12 +32,10 @@ Plug 'tpope/vim-dispatch'
 Plug 'tpope/vim-fugitive'
 Plug 'tpope/vim-rhubarb'
 call plug#end()
-""}}}
-"COLOURS {{{
+"COLOURS {{{1
 call colours#update_background()
 call colours#lazy_colorscheme('monochrome-light')
-"  }}}
-"STATUS LINE {{{
+"STATUS LINE {{{1
 function! init#status_new_file()
   if (filereadable(expand('%')))
     return ""
@@ -46,13 +44,20 @@ function! init#status_new_file()
   endif
 endfunction
 
-set statusline=%#Status1#\ %Y\ 
-              \%#Status0#\ %{notes#statusline()}\ %=\ 
-              \%{refactor#refactoring_mode()}\ %m\ \ 
-              \%#Status1#%{init#status_new_file()}\ %f
+set statusline =
+set statusline+=\ %n\ 
+set statusline+=%#Status1#
+set statusline+=\ %f:%l:%c\ \|
+set statusline+=%#Status1#
+set statusline+=%{notes#statusline()}
+set statusline+=%=
+set statusline+=%{refactor#refactoring_mode()}
+set statusline+=%m
+set statusline+=%{init#status_new_file()}
+set statusline+=%#Status0#
+set statusline+=\ %{fugitive#head()}\ %p%%\ 
 
-"}}}
-""GENERAL SETTINGS {{{
+"GENERAL SETTINGS {{{1
 set exrc
 
 if has("persistent_undo")
@@ -78,6 +83,7 @@ set nonu
 set nornu
 set noswapfile
 set nowrap
+set nowrapscan
 set scrolloff=0
 set sessionoptions+=tabpages,globals
 set smartcase
@@ -101,10 +107,18 @@ set list
 set wildignore+=*/tmp/*,*.so,*.swp,*.zip,*.o,*.hi
 set iskeyword+=-
 
+" Tabline
 set tabline=%!tabbar#tabline()
-"
-""}}}
-""AUTOCMD {{{
+
+" Fold text
+set foldtext=init#fold_test()
+function! init#fold_test()
+  let line = getline(v:foldstart)
+  let sub = substitute(line, '/\*\|\*/\|{{{\d\=', '', 'g')
+  return repeat('--', v:foldlevel) . sub
+endfunction
+
+"AUTOCMD {{{1
 autocmd! User FzfStatusLine    call <SID>fzf_statusline()
 
 augroup general
@@ -137,9 +151,8 @@ augroup coq
   autocmd FileType coq nnoremap <buffer> <leader>cc :CoqToCursor<cr>
   autocmd FileType coq nnoremap <buffer> <leader>cu :CoqUndo<cr>
 augroup END
-""}}}
-"MAPPINGS {{{
-" Git
+"MAPPINGS {{{1
+" Git {{{2
 nnoremap <leader>gs   :Gstatus<cr>
 nnoremap <leader>gp   :Gpull<cr>
 nnoremap <leader>gu   :Gpush<cr>
@@ -150,16 +163,16 @@ nnoremap <leader>gd   :Gdiff<cr>
 nnoremap <leader>ggh  :GitGutterLineHighlightsToggle<cr>
 nnoremap <leader>ggs  :GitGutterSignsToggle<cr>
 nnoremap <leader>ga   :GitGutterStageHunk<cr>
-" Git log
+" Git log {{{3
 nnoremap <leader>glb  :BCommits<cr>
 nnoremap <leader>glc  :Commits<cr>
 nnoremap <leader>gll  :GV<cr>
-" Git hunks
+" Git hunks {{{3
 nnoremap <leader>ghp  :GitGutterPreviewHunk<cr>
 nnoremap <leader>ghu  :GitGutterUndoHunk<cr>
 nmap     ]c           <Plug>GitGutterNextHunk
 nmap     [c           <Plug>GitGutterPrevHunk
-" Git refactoring
+" Git refactoring {{{3
 nnoremap <leader>%    :%s/\<<C-r><C-w>\>//gI\|norm``<left><left><left><left><left><left><left><left><left><left>
 nnoremap <leader><    :'<,'>s/\<<C-r><C-w>\>//gI\|norm``<left><left><left><left><left><left><left><left><left><left>
 nnoremap <leader>grf  :FindAllPrompt<cr>
@@ -167,17 +180,17 @@ nnoremap <leader>grr  :call refactor#replace_all_word(expand('<cword>'))<cr>
 nnoremap <leader>grt  :ToggleRefactoring<cr>
 nnoremap <leader>grw  :silent! call refactor#find_all_tab(expand('<cword>'))<cr>
 
-" Jumps
+" Jumps {{{2
 nnoremap <leader>]  :call fzf#vim#tags(expand('<cword>'), {'options': '--exact --select-1 --exit-0'})<cr>
 nnoremap <leader>ji :call haskell#jump_to_imports()<cr>
 nnoremap <leader>jm :call fzf#vim#ag("^module " . expand('<cWORD>'), {'options': '-1 -0'})<cr>
 
-" Note-taking
+" Note-taking {{{2
 nnoremap <silent> = :call notes#jump_note()<cr>
 nnoremap <silent> + :call notes#add_line_to_notes()<cr>
 vnoremap <silent> + :call notes#add_line_to_notes()<cr>
 
-" Terminal
+" Terminal {{{2
 if (has('nvim'))
   tnoremap <C-w><Bar> <C-\><C-n>:vsp term:///bin/zsh<cr>
   tnoremap <C-w>- <C-\><C-n>:sp term:///bin/zsh<cr>
@@ -191,35 +204,40 @@ nnoremap <C-h>  :tabprev<cr>
 nnoremap <C-l>  :tabnext<cr>
 nnoremap <C-w>, :call tabbar#rename_current_tab()<cr>
 
-" For editing from a phone
+" For editing from a phone {{{2
 nnoremap <leader>w  <C-w>
 nnoremap <leader>tn :tabnew<cr>
 nnoremap <leader>ll :tabn<cr>
 nnoremap <leader>hh :tabp<cr>
 
-" Finding things
+" Finding things {{{2
 nnoremap <C-p>           :Files<cr>
 nnoremap <leader>F       :Ag! <C-R>o<cr>
 nnoremap <leader>a       :Ag!<cr>
 vnoremap <leader>f "oy   :Ag! <C-R>o<cr>
 
-" Formatting
+" Formatting {{{2
 nnoremap <leader>t     :Tabularize/
 
-" Buffers
+" Buffers {{{2
 nnoremap <leader><Tab> :Buffers<cr>
 nnoremap <leader>bl    :BLines<cr>
 nnoremap <leader>cd    :cd %:h<cr>
 nnoremap <leader>f     :Ag! <C-R><C-W><cr>
 nnoremap <leader>ne    :FZFNeigh<cr>
 nnoremap <leader>p     :GFiles<cr>
-nnoremap <leader>tr    :call init#toggle_relative_number()<CR>
 
-" Undo
+" Toggling things {{{2
+nnoremap <leader>tr    :call init#toggle_relative_number()<CR>
+nnoremap <leader>tn  :if &nu \| set nonu \| else \| set nu \| :endif<cr>
+nnoremap <leader>tg  :GitGutterLineHighlightsToggle<cr>
+nnoremap <leader>ts  :GitGutterSignsToggle<cr>
+
+" Undo {{{2
 nnoremap <leader>uf    :UndotreeFocus<cr>
 nnoremap <leader>ut    :UndotreeToggle<cr>
 
-" Misc
+" Misc {{{2
 nnoremap <leader>li      O<esc>80i-<esc>
 nnoremap <leader>80      :vertical resize 80<CR>
 nnoremap <expr> gb       '`[' . strpart(getregtype(), 0, 1) . '`]'
@@ -227,13 +245,15 @@ nnoremap <leader>ic      :echo CurrentTrack()<cr>
 nnoremap <leader>R       :VimuxRunLastCommand<cr>
 vnoremap t               :call init#termbin()<cr>
 
-" vimrc
+" vimrc {{{2
 nnoremap <leader>ev :e `=resolve(expand($MYVIMRC))`<CR>
 nnoremap <leader>sv :so $MYVIMRC<CR>
 
 " When in diff mode, jump between hunks, otherwise location list items
 nnoremap <expr> <C-j> &diff ? ']c' : ':lnext<cr>'
 nnoremap <expr> <C-k> &diff ? '[c' : ':lprev<cr>'
+
+nnoremap <expr> <C-a> &diff ? ':GitGutterStageHunk<cr>' : '<C-a>'
 
 function! init#haskell_mappings()
   nnoremap <buffer> --h "=HaskellModuleHeader()<CR>:0put =<cr>
@@ -283,7 +303,7 @@ map #  <Plug>(incsearch-nohl-#)
 map g* <Plug>(incsearch-nohl-g*)
 map g# <Plug>(incsearch-nohl-g#)
 
-"--text manipulation {{{
+" TEXT MANIPULATION {{{2
 nmap <leader>x( <Plug>Delete-surrounding-(
 nmap     <Plug>Delete-surrounding-( mzdi(va(p`zh
 nmap <leader>x[ <Plug>Delete-surrounding-[
@@ -301,24 +321,18 @@ nmap <leader>[ <Plug>Surround-word-with-[
 nnoremap <Plug>Surround-word-with-[ mzdiwi[<esc>pa]<esc>`zl
 nmap <leader>{ <Plug>Surround-word-with-{
 nnoremap <Plug>Surround-word-with-{ mzdiwi{<esc>pa}<esc>`zl
-"}}}
-" Show highlight group
+" Show highlight group {{{3
 nnoremap <leader>hg :echo "hi<" . synIDattr(synID(line("."),col("."),1),"name") . '> trans<'
 \ . synIDattr(synID(line("."),col("."),0),"name") . "> lo<"
 \ . synIDattr(synIDtrans(synID(line("."),col("."),1)),"name") . ">"<CR>
 
-" Text objects
+" Text objects {{{3
 omap ic <Plug>GitGutterTextObjectInnerPending
 omap ac <Plug>GitGutterTextObjectOuterPending
 xmap ic <Plug>GitGutterTextObjectInnerVisual
 xmap ac <Plug>GitGutterTextObjectOuterVisual
 
-"}}}
-"iPad MAPPINGS {{{
-
-
-"}}}
-"MISC FUNCTIONS {{{
+"MISC FUNCTIONS {{{1
 " Upload selection to termbin
 function! init#termbin() range
   echo system('echo '.shellescape(join(getline(a:firstline, a:lastline), "\\n")).'| sed s/\\\\\\\\\$// | nc termbin.com 9999 | pbcopy')
@@ -342,16 +356,7 @@ function! TermSplitV()
     silent :call system('tmux split-pane -h -l80 -c ' . cwd)
 endfunction
 
-function! init#toggle_relative_number()
-    if &rnu
-        set nornu
-    else
-        set rnu
-    endif
-endfunction
-
-"}}}
-"DIFFING {{{
+"DIFFING {{{1
 set diffopt+=iwhite
 set diffexpr=DiffW()
 
@@ -366,8 +371,7 @@ function! DiffW()
    silent execute "!diff -a --binary " . opt .
      \ v:fname_in . " " . v:fname_new .  " > " . v:fname_out
 endfunction
-"}}}
-"FZF {{{
+"FZF {{{1
 let g:fzf_colors =
 \ { 'fg':      ['fg', 'Comment'],
   \ 'bg':      ['bg', 'Normal'],
@@ -421,8 +425,7 @@ function! s:fzf_neighbouring_files()
   setlocal concealcursor=nvic
 endfunction
 
-"}}}
-"COMMANDS {{{
+"COMMANDS {{{1
 
 " Find argument in rtp
 " example: Config haskell
@@ -464,8 +467,7 @@ command! -nargs=0 MarkErrorLines
 command! -nargs=0 ClearErrors
   \ call init#clear_errors()
 
-"}}}
-"ERRORS {{{
+"ERRORS {{{1
 
 function! init#clear_errors()
   silent! call matchdelete(50)
@@ -489,8 +491,7 @@ function! init#mark_error_lines()
   call matchaddpos("Error", es, 100, 50)
 endfunction
 
-""}}}
-""PLUGIN CONFIG {{{
+"PLUGIN CONFIG {{{1
 let g:loaded_matchparen = 1
 
 let g:gist_open_browser_after_post = 1
@@ -499,9 +500,9 @@ let g:gist_update_on_write = 2
 
 let g:gitgutter_diff_args = '-w'
 
-let g:gitgutter_sign_added = '·'
-let g:gitgutter_sign_modified = '·'
-let g:gitgutter_sign_removed = '·'
+let g:gitgutter_sign_added = '│'
+let g:gitgutter_sign_modified = '│'
+let g:gitgutter_sign_removed = '│'
 
 let $FZF_DEFAULT_COMMAND = 'ag -g ""'
 let g:fzf_buffers_jump = 1
@@ -545,6 +546,7 @@ let g:tagbar_type_haskell = {
 \ }
 
 let g:undotree_WindowLayout = 3
-"}}}
 
 set secure
+
+"}}}
