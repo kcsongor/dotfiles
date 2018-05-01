@@ -147,7 +147,8 @@ nnoremap <leader>gc   :Gcommit<cr>
 nnoremap <leader>gw   :Gwrite<cr>
 nnoremap <leader>gb   :Gblame<cr>
 nnoremap <leader>gd   :Gdiff<cr>
-nnoremap <leader>gg   :GitGutterLineHighlightsToggle<cr>
+nnoremap <leader>ggh  :GitGutterLineHighlightsToggle<cr>
+nnoremap <leader>ggs  :GitGutterSignsToggle<cr>
 nnoremap <leader>ga   :GitGutterStageHunk<cr>
 " Git log
 nnoremap <leader>glb  :BCommits<cr>
