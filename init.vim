@@ -40,7 +40,7 @@ function! init#status_new_file()
   if (filereadable(expand('%')))
     return ""
   else
-    return " [·]"
+    return " [·] "
   endif
 endfunction
 
@@ -128,16 +128,6 @@ augroup general
   autocmd BufWritePost * call notes#update_notes_after_write()
 augroup END
 
-augroup notes
-  autocmd!
-  autocmd BufEnter *.notes nnoremap <buffer> <silent> <C-i> :call notes#jump_from_note()<cr>
-  autocmd BufEnter *.notes nnoremap <buffer> <silent> <C-o> :tabclose<cr>
-  autocmd BufEnter *.notes nnoremap <buffer> <silent> =     :tabclose<cr>
-  autocmd BufEnter *.notes setlocal autoread
-  autocmd BufEnter *.notes setlocal foldlevel=0
-  autocmd BufWritePost *.notes call notes#refresh_notes()
-augroup END
-
 augroup haskell
   autocmd!
   autocmd FileType lhaskell call      init#lhaskell_mappings()
@@ -160,8 +150,6 @@ nnoremap <leader>gc   :Gcommit<cr>
 nnoremap <leader>gw   :Gwrite<cr>
 nnoremap <leader>gb   :Gblame<cr>
 nnoremap <leader>gd   :Gdiff<cr>
-nnoremap <leader>ggh  :GitGutterLineHighlightsToggle<cr>
-nnoremap <leader>ggs  :GitGutterSignsToggle<cr>
 nnoremap <leader>ga   :GitGutterStageHunk<cr>
 " Git log {{{3
 nnoremap <leader>glb  :BCommits<cr>
@@ -206,7 +194,6 @@ nnoremap <C-w>, :call tabbar#rename_current_tab()<cr>
 
 " For editing from a phone {{{2
 nnoremap <leader>w  <C-w>
-nnoremap <leader>tn :tabnew<cr>
 nnoremap <leader>ll :tabn<cr>
 nnoremap <leader>hh :tabp<cr>
 
@@ -228,7 +215,7 @@ nnoremap <leader>ne    :FZFNeigh<cr>
 nnoremap <leader>p     :GFiles<cr>
 
 " Toggling things {{{2
-nnoremap <leader>tr    :call init#toggle_relative_number()<CR>
+nnoremap <leader>tr  :call init#toggle_relative_number()<CR>
 nnoremap <leader>tn  :if &nu \| set nonu \| else \| set nu \| :endif<cr>
 nnoremap <leader>tg  :GitGutterLineHighlightsToggle<cr>
 nnoremap <leader>ts  :GitGutterSignsToggle<cr>
