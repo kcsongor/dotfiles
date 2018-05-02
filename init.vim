@@ -17,7 +17,7 @@ Plug 'jvoorhis/coq.vim'
 Plug 'kcsongor/vim-colour-manager'
 Plug 'kcsongor/vim-hs'
 Plug 'kcsongor/vim-itunes'
-Plug 'kcsongor/vim-monochrome-light'
+Plug 'kcsongor/vim-monochrome'
 Plug 'kcsongor/vim-notes'
 Plug 'kcsongor/vim-refactor'
 Plug 'kcsongor/vim-tabbar'
@@ -34,7 +34,7 @@ Plug 'tpope/vim-rhubarb'
 call plug#end()
 "COLOURS {{{1
 call colours#update_background()
-call colours#lazy_colorscheme('monochrome-light')
+call colours#lazy_colorscheme('monochrome')
 "STATUS LINE {{{1
 function! init#status_new_file()
   if (filereadable(expand('%')))
@@ -192,6 +192,13 @@ nnoremap <C-h>  :tabprev<cr>
 nnoremap <C-l>  :tabnext<cr>
 nnoremap <C-w>, :call tabbar#rename_current_tab()<cr>
 
+" Tmux interaction {{{2
+
+nnoremap <leader>> :VimuxPromptCommand<cr>
+nnoremap <leader>vv :VimuxRunLastCommand<cr>
+let g:VimuxPromptString="> "
+let g:VimuxResetSequence="q C-u C-l"
+
 " For editing from a phone {{{2
 nnoremap <leader>w  <C-w>
 nnoremap <leader>ll :tabn<cr>
@@ -210,6 +217,7 @@ nnoremap <leader>t     :Tabularize/
 nnoremap <leader><Tab> :Buffers<cr>
 nnoremap <leader>bl    :BLines<cr>
 nnoremap <leader>cd    :cd %:h<cr>
+nnoremap <leader>lcd   :lcd %:h<cr>
 nnoremap <leader>f     :Ag! <C-R><C-W><cr>
 nnoremap <leader>ne    :FZFNeigh<cr>
 nnoremap <leader>p     :GFiles<cr>
