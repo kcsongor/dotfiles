@@ -123,8 +123,8 @@ autocmd! User FzfStatusLine    call <SID>fzf_statusline()
 
 augroup general
   autocmd!
-  autocmd WinLeave     * set nornu
-  autocmd WinEnter     * if &nu | set rnu | endif
+  autocmd WinLeave     * if &rnu | let w:rnu=1 | set nornu | else | let w:rnu=0 | endif
+  autocmd WinEnter     * silent! if w:rnu | set rnu | endif
   autocmd BufWritePost * call notes#update_notes_after_write()
 augroup END
 
@@ -223,8 +223,8 @@ nnoremap <leader>ne    :FZFNeigh<cr>
 nnoremap <leader>p     :GFiles<cr>
 
 " Toggling things {{{2
-nnoremap <leader>tr  :call init#toggle_relative_number()<CR>
-nnoremap <leader>tn  :if &nu \| set nonu \| else \| set nu \| :endif<cr>
+nnoremap <leader>tr  :if &rnu \| set nornu \| else \| set rnu \| :endif<cr>
+nnoremap <leader>tn  :if &nu \| set nonu \| se nornu \| else \| set nu \| :endif<cr>
 nnoremap <leader>tg  :GitGutterLineHighlightsToggle<cr>
 nnoremap <leader>ts  :GitGutterSignsToggle<cr>
 
