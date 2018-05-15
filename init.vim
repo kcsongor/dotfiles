@@ -10,6 +10,7 @@ Plug 'haya14busa/incsearch.vim'
 Plug 'itchyny/vim-cursorword' " underline word under cursor
 Plug 'itchyny/vim-parenmatch'
 Plug 'jiangmiao/auto-pairs'
+Plug 'jreybert/vimagit'
 Plug 'junegunn/fzf.vim'
 Plug 'junegunn/goyo.vim'
 Plug 'junegunn/gv.vim'
@@ -29,6 +30,7 @@ Plug 'mattn/webapi-vim'
 Plug 'mbbill/undotree'
 Plug 'tpope/vim-commentary'
 Plug 'tpope/vim-dispatch'
+Plug 'radenling/vim-dispatch-neovim'
 Plug 'tpope/vim-fugitive'
 Plug 'tpope/vim-rhubarb'
 call plug#end()
@@ -50,6 +52,7 @@ set statusline+=%#Status1#
 set statusline+=\ %f:%l:%c\ \|
 set statusline+=%#Status1#
 set statusline+=%{notes#statusline()}
+"set statusline+=%{tagbar#currenttag(\"[%s]\",\"\")}
 set statusline+=%=
 set statusline+=%{refactor#refactoring_mode()}
 set statusline+=%m
@@ -72,6 +75,7 @@ set autoindent
 set backspace=indent,eol,start
 set colorcolumn=80
 set diffopt+=vertical " vertical split in diff
+set noequalalways
 set expandtab
 set foldmethod=marker
 set hidden
@@ -170,13 +174,13 @@ nnoremap <leader>grw  :silent! call refactor#find_all_tab(expand('<cword>'))<cr>
 
 " Jumps {{{2
 nnoremap <leader>]  :call fzf#vim#tags(expand('<cword>'), {'options': '--exact --select-1 --exit-0'})<cr>
-nnoremap <leader>ji :call haskell#jump_to_imports()<cr>
+nnoremap <leader>ji :call Haskell_jump_to_imports()<cr>
 nnoremap <leader>jm :call fzf#vim#ag("^module " . expand('<cWORD>'), {'options': '-1 -0'})<cr>
 
 " Note-taking {{{2
 nnoremap <silent> = :call notes#jump_note()<cr>
-nnoremap <silent> + :call notes#add_line_to_notes()<cr>
-vnoremap <silent> + :call notes#add_line_to_notes()<cr>
+nnoremap <silent> + :call notes#add_lines_to_notes()<cr>
+vnoremap <silent> + :call notes#add_lines_to_notes()<cr>
 
 " Terminal {{{2
 if (has('nvim'))
@@ -257,16 +261,16 @@ function! init#haskell_mappings()
   nnoremap <buffer> <leader>eh   :Config haskell<CR>
   nmap     <buffer> <leader>ey   <Plug>Edit-stack.yaml
   nnoremap <buffer> <leader>ho   :call Hoogle()<cr>
-  nnoremap <buffer> <leader>ia   :call haskell#import_module()<cr>
+  nnoremap <buffer> <leader>ia   :call Haskell_import_module()<cr>
   nmap     <buffer> <leader>ii   <Plug>:i-cword
   nmap     <buffer> <leader>ik   <Plug>:k-cword
   nnoremap <buffer> <leader>ioa  :call AddOptionGHCI()<cr>
   nmap     <buffer> <leader>ir   <Plug>:rep-cword
   nmap     <buffer> <leader>it   <Plug>:t-cword
-  nnoremap <buffer> <leader>la   :call haskell#add_language_pragma()<cr>
+  nnoremap <buffer> <leader>la   :call Haskell_add_language_pragma()<cr>
   nnoremap <buffer> <leader>lf   :w<cr> :call LoadGhci()<cr>
   nnoremap <buffer> <leader>mi   :call <SID>insert_module_name()<cr>
-  nnoremap <buffer> <leader>oa   :call haskell#add_compiler_flag()<cr>
+  nnoremap <buffer> <leader>oa   :call Haskell_add_compiler_flag()<cr>
   nnoremap <buffer> <leader>r    :call ReloadGHCI()<cr>
   nmap     <buffer> <leader>sb   <Plug>Open-REPL
   nmap     <buffer> <leader>sc   <Plug>View-core
@@ -340,7 +344,11 @@ command! -nargs=0 TermSplitH
 
 function! TermSplitH()
     let cwd = expand('%:p:h')
-    silent :call system('tmux split-pane -v -l15 -c ' . cwd)
+    if (s:is_tmux())
+      silent :call system('tmux split-pane -v -l15 -c ' . cwd)
+    else
+      exe "split term://".cwd."//zsh" | :startinsert
+    endif
 endfunction
 
 command! -nargs=0 TermSplitV
@@ -348,11 +356,27 @@ command! -nargs=0 TermSplitV
 
 function! TermSplitV()
     let cwd = expand('%:p:h')
-    silent :call system('tmux split-pane -h -l80 -c ' . cwd)
+    if (s:is_tmux())
+      silent :call system('tmux split-pane -h -l80 -c ' . cwd)
+    else
+      exe "vsplit term://".cwd."//zsh" | :startinsert
+    endif
+endfunction
+
+function! DeleteHiddenBuffers()
+    let tpbl=[]
+    call map(range(1, tabpagenr('$')), 'extend(tpbl, tabpagebuflist(v:val))')
+    for buf in filter(range(1, bufnr('$')), 'bufexists(v:val) && index(tpbl, v:val)==-1')
+        silent execute 'bwipeout' buf
+    endfor
+endfunction
+
+function! s:is_tmux()
+  return len(systemlist("echo $TMUX")) > 0
 endfunction
 
 "DIFFING {{{1
-set diffopt+=iwhite
+"set diffopt+=iwhite
 set diffexpr=DiffW()
 
 function! DiffW()
@@ -360,12 +384,13 @@ function! DiffW()
    if &diffopt =~ "icase"
      let opt = opt . "-i "
    endif
-   if &diffopt =~ "iwhite"
-     let opt = opt . "-w " " swapped vim's -b with -w
-   endif
+"   if &diffopt =~ "iwhite"
+"     let opt = opt . "-w " " swapped vim's -b with -w
+"   endif
    silent execute "!diff -a --binary " . opt .
      \ v:fname_in . " " . v:fname_new .  " > " . v:fname_out
 endfunction
+
 "FZF {{{1
 let g:fzf_colors =
 \ { 'fg':      ['fg', 'Comment'],
@@ -493,7 +518,7 @@ let g:gist_open_browser_after_post = 1
 let g:gist_post_private = 1
 let g:gist_update_on_write = 2
 
-let g:gitgutter_diff_args = '-w'
+"let g:gitgutter_diff_args = '-w'
 
 let g:gitgutter_sign_added = '│'
 let g:gitgutter_sign_modified = '│'

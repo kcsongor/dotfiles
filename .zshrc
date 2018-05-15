@@ -1,6 +1,7 @@
 export ZSH=~/.oh-my-zsh
 DISABLE_AUTO_UPDATE="true"
 DISABLE_AUTO_TITLE="true"
+DISABLE_LS_COLORS="true"
 COMPLETION_WAITING_DOTS="true"
 DISABLE_UNTRACKED_FILES_DIRTY="true"
 plugins=(git osx vi-mode dirstack haskell wd)
