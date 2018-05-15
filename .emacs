@@ -79,11 +79,13 @@
   :ensure t
   :bind ("M-x" . helm-M-x)
   :init
+  ;; Note: these settings break "C-h m" in helm (which is not too
+  ;; useful anyway)
   (add-to-list 'display-buffer-alist
-	       `(,(rx bos "*helm" (* not-newline) "*" eos)
-		 (display-buffer-in-side-window)
-		 (inhibit-same-window . t)
-		 (window-height . 0.3)))
+  	       `(,(rx bos "*helm" (* not-newline) "*" eos)
+  		 (display-buffer-in-side-window)
+  		 (inhibit-same-window . t)
+  		 (window-height . 0.3)))
 
   :config
   (helm-mode 1))
@@ -124,8 +126,8 @@
   :config
   (company-mode 1)
   :bind (:map company-active-map
-	      ("C-j" . company-select-next)
-	      ("C-k" . company-select-previous)
+	      ("C-n" . company-select-next)
+	      ("C-p" . company-select-previous)
 	      ("C-l" . company-complete-selection)))
 
 ;; (setq coq-prog-name "/Applications/CoqIDE_8.6.1.app/Contents/Resources/bin/coqtop")
