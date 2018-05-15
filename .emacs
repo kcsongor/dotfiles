@@ -29,7 +29,22 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "Iosevka Slab" :foundry "unknown" :slant normal :weight normal :height 120 :width normal)))))
+ '(default ((t (:family "Iosevka" :height 120))))
+ '(org-block ((t (:family "Iosevka"))))
+ '(org-level-1 ((t (:family "ETBembo" :height 1.6))))
+ '(org-level-2 ((t (:family "ETBembo" :height 1.3))))
+ '(org-level-3 ((t (:family "ETBembo" :height 1.2))))
+ '(org-level-4 ((t (:family "ETBembo" :height 1.1))))
+ '(org-meta-line ((t (:family "Iosevka" :height 1))))
+ '(org-table ((t (:family "Iosevka" :height 1))))
+ '(org-tag ((t (:family "ETBembo" :height 0.6))))
+ '(org-todo ((t (:family "Iosevka" :height 1))))
+ '(shm-current-face ((t (:background "#f0f0f0"))))
+ '(shm-quarantine-face ((t (:background "#a0a0a0")))))
+
+(add-hook 'org-mode-hook
+	  (lambda ()
+	    (face-remap-add-relative 'default :family "ETBembo" :height 130)))
 
 (setq org-startup-indented t
       org-bullets-bullet-list '(" ") ;; no bullets, needs org-bullets package
@@ -45,10 +60,13 @@
 ;;-------------------------------------------------------------------------------- 
 ;; Packages
 (add-to-list 'load-path "~/.emacs.d/lisp/")
+(add-to-list 'load-path "~/Dev/haskell/structured-haskell-mode/elisp/")
 (use-package org-pretty-table)
+(load "rogue")
+(require 'shm)
 
 (use-package evil
-  :ensure t
+  :ensure 
   :config
   (evil-mode 1)
   (setq evil-want-abbrev-expand-on-insert-exit nil) ; abbrevs are very annoying when in coq
@@ -78,15 +96,29 @@
 (use-package helm
   :ensure t
   :bind ("M-x" . helm-M-x)
+  :diminish helm-mode
+  :commands helm-mode
   :init
-  (add-to-list 'display-buffer-alist
-	       `(,(rx bos "*helm" (* not-newline) "*" eos)
-		 (display-buffer-in-side-window)
-		 (inhibit-same-window . t)
-		 (window-height . 0.3)))
-
+  ;; Note: these settings break "C-h m" in helm (which is not too
+  ;; useful anyway)
+  ;; (add-to-list 'display-buffer-alist
+  ;; 	       `(,(rx bos "*helm" (* not-newline) "*" eos)
+  ;; 		 (display-buffer-in-side-window)
+  ;; 		 (inhibit-same-window . t)
+  ;; 		 (window-height . 0.3)))
   :config
-  (helm-mode 1))
+  (helm-mode 1)
+  (setq helm-buffers-fuzzy-matching t)
+  (setq helm-autoresize-mode nil)
+  (setq helm-buffer-max-length 40)
+  (define-key helm-map (kbd "S-SPC") 'helm-toggle-visible-mark)
+  (define-key helm-find-files-map (kbd "C-h") 'helm-find-files-up-one-level)
+  (define-key helm-find-files-map (kbd "C-k") 'helm-previous-line)
+  (define-key helm-find-files-map (kbd "C-l") 'helm-execute-persistent-action)
+  (define-key helm-map (kbd "C-l") 'helm-execute-persistent-action)
+  (define-key helm-map (kbd "C-j") 'helm-next-line)
+  (define-key helm-map (kbd "C-k") 'helm-previous-line)
+  )
 
 (use-package pdf-tools
     :ensure t
@@ -124,8 +156,8 @@
   :config
   (company-mode 1)
   :bind (:map company-active-map
-	      ("C-j" . company-select-next)
-	      ("C-k" . company-select-previous)
+	      ("C-n" . company-select-next)
+	      ("C-p" . company-select-previous)
 	      ("C-l" . company-complete-selection)))
 
 ;; (setq coq-prog-name "/Applications/CoqIDE_8.6.1.app/Contents/Resources/bin/coqtop")
@@ -154,7 +186,7 @@
 ;(nmap "C-a" 'evil-numbers/inc-at-pt)
 ;(nmap "C-X" 'evil-numbers/dec-at-pt)
 ;(nmap "C-u" 'evil-scroll-page-up)
-(nmap "C-p" 'helm-find)
+(nmap "C-p" 'helm-find-files)
 (nmap "A-f" 'helm-recentf)
 (imap "C-g" 'evil-normal-state)
 
@@ -165,7 +197,19 @@
   "f" 'helm-do-grep-ag
   "tr" 'linum-relative-mode
   "tn" 'linum-mode
-  "TAB" 'helm-buffers-list)
+  "TAB" 'helm-buffers-list
+  ;; Git
+  "gs" 'magit-status
+  "gp" 'magit-pull
+  "gu" 'magit-push-popup
+  "gc" 'magit-commit
+  "gb" 'magit-blame
+  "gd" 'magit-diff
+  "ga" 'magit-stage
+  )
+
+(defun open-dotemacs (&optional arg)
+  (interactive "p") (find-file "~/.emacs"))
 
 ;;-------------------------------------------------------------------------------- 
 ;; Haskell stuff
@@ -237,7 +281,7 @@
 ;;   (setenv "PATH" (concat "/~/cs/bin:" (getenv "PATH")))
 ;;   (define-key eshell-mode-map (kbd "M-s") 'other-window-or-split))
 
-;; (add-hook 'eshell-mode-hook 'eshell-mode-hook-func)
+;; (ad
 
 ;;;-------------------------------------------------------------------------------- 
 
@@ -278,16 +322,38 @@
  '(ansi-color-names-vector ["#000000" "light gray" "dark gray" "light slate gray"])
  '(custom-safe-themes
    (quote
-    ("cc0dbb53a10215b696d391a90de635ba1699072745bf653b53774706999208e3" "3e335d794ed3030fefd0dbd7ff2d3555e29481fe4bbb0106ea11c660d6001767" "a2dd771a05705be2a6e6adb6ddbc7a27ebf49edab1dffdbefe243096becba7c9" "a25c42c5e2a6a7a3b0331cad124c83406a71bc7e099b60c31dc28a1ff84e8c04" "c259628fbeed876031537c380f3f2ebe084fe5107f5db63edd4fc1bbdab9cba7" default)))
+    ("a3fa4abaf08cc169b61dea8f6df1bbe4123ec1d2afeb01c17e11fdc31fc66379" "3a3de615f80a0e8706208f0a71bbcc7cc3816988f971b6d237223b6731f91605" "fa2b58bb98b62c3b8cf3b6f02f058ef7827a8e497125de0254f56e373abee088" "cc0dbb53a10215b696d391a90de635ba1699072745bf653b53774706999208e3" "3e335d794ed3030fefd0dbd7ff2d3555e29481fe4bbb0106ea11c660d6001767" "a2dd771a05705be2a6e6adb6ddbc7a27ebf49edab1dffdbefe243096becba7c9" "a25c42c5e2a6a7a3b0331cad124c83406a71bc7e099b60c31dc28a1ff84e8c04" "c259628fbeed876031537c380f3f2ebe084fe5107f5db63edd4fc1bbdab9cba7" default)))
+ '(exec-path
+   (quote
+    ("/Users/cs/.cargo/bin" "/usr/local/bin" "/usr/bin" "/bin" "/usr/sbin" "/sbin" "/Library/TeX/texbin" "/Library/Frameworks/Mono.framework/Versions/Current/Commands" "/Applications/Wireshark.app/Contents/MacOS" "/Users/cs/Dev/emacs-mac/lib-src" "/Users/cs/.cabal/bin")))
+ '(fci-rule-color "#858FA5" t)
+ '(haskell-process-type (quote cabal-new-repl))
+ '(jdee-db-active-breakpoint-face-colors (cons "#100e23" "#906cff"))
+ '(jdee-db-requested-breakpoint-face-colors (cons "#100e23" "#95ffa4"))
+ '(jdee-db-spec-breakpoint-face-colors (cons "#100e23" "#565575"))
  '(org-catch-invisible-edits (quote show-and-error))
  '(org-entities-user (quote (("mathbb" "mathbb" nil "" "*" "" ""))))
  '(package-selected-packages
    (quote
-    (ag ivy org-ref minimal-theme white-theme white-sand-theme org-bullets which-key vimrc-mode vdiff-magit use-package stack-mode slack sexy-monochrome-theme scribble-mode projectile popwin paredit-everywhere org-pdfview markdown-mode linum-relative interleave helm-ls-git helm-ghc eyebrowse evil-tabs evil-surround evil-paredit evil-org evil-numbers evil-magit evil-leader evil-indent-plus evil-expat evil-cleverparens diff-hl company-ghc company-coq boogie-friends auctex 0blayout))))
+    (fzf exec-path-from-shell doom-themes molokai-theme spacemacs-theme writeroom-mode reveal-in-osx-finder ag ivy org-ref minimal-theme white-theme white-sand-theme org-bullets which-key vimrc-mode vdiff-magit use-package stack-mode slack sexy-monochrome-theme scribble-mode projectile popwin paredit-everywhere org-pdfview markdown-mode linum-relative interleave helm-ls-git helm-ghc eyebrowse evil-tabs evil-surround evil-paredit evil-org evil-numbers evil-magit evil-leader evil-indent-plus evil-expat evil-cleverparens diff-hl company-ghc company-coq boogie-friends auctex 0blayout)))
+ '(vc-annotate-background "#ffffff")
+ '(vc-annotate-color-map
+   (quote
+    ((20 . "#ab4642")
+     (50 . "#dc9656")
+     (80 . "#f7ca88")
+     (110 . "#a1b56c")
+     (140 . "#86c1b9")
+     (170 . "#7cafc2")
+     (200 . "#ab4642")
+     (230 . "#a16046")
+     (260 . "#181818")
+     (290 . "#282828")
+     (320 . "#383838")
+     (350 . "#585858"))))
+ '(vc-annotate-very-old-color "#585858"))
 
 ;; Org mode latex stuff
-(add-to-list 'org-entities-user
-             '("mathbb" "\\mathbb{}" t "" "" "" "*"))
 (add-to-list 'org-entities-user
              '("leadsto" "\\leadsto{}" t "~>" "~>" "~>" "↝"))
 (add-to-list 'org-entities-user
@@ -300,4 +366,20 @@
              '("Tbb" "\\mathbb{T}" f "T" "T" "T" "𝕋"))
 (add-to-list 'org-entities-user
              '("Fbb" "\\mathbb{F}" f "F" "F" "F" "𝔽"))
+(add-to-list 'org-entities-user
+             '("vdash" "\\vdash{}" f "|-" "|-" "|-" "⊢"))
+(add-to-list 'org-entities-user
+             '("Vdash" "\\Vdash{}" f "||-" "||-" "||-" "⊩"))
+(add-to-list 'org-entities-user
+             '("mapsto" "\\mapsto{}" f "|->" "|->" "|->" "↦"))
 (setq org-latex-caption-above nil)
+
+(defun what-face (position)
+  "https://stackoverflow.com/questions/1242352/get-font-face-under-cursor-in-emacs/1242366#1242366"
+  (interactive "d")
+  (let ((face (or (get-char-property position 'read-face-name)
+                  (get-char-property position 'face))))
+    (if face (message "Face: %s" face) (message "No face at %d" position))))
+(put 'narrow-to-region 'disabled nil)
+
+(setenv "PATH" (concat "/Users/cs/.local/bin:/Users/cs/.cabal/bin:" (getenv "PATH")))
