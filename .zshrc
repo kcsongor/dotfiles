@@ -13,27 +13,6 @@ export REFINED_PROMPT_SYMBOL='λ'
 export PAGER="less"
 export EDITOR='nvim'
 
-# Path
-export PATH=/bin
-export PATH=$PATH:/Applications/CoqIDE_8.6.1.app/Contents/Resources/bin
-export PATH=$PATH:/$HOME/Dev/purescript/purescript/.stack-work/install/x86_64-osx/nightly-2017-09-10/8.2.1/bin
-export PATH=$PATH:/usr/local/bin
-export PATH=$PATH:/usr/local/Cellar/emacs/25.2/bin
-export PATH=$PATH:/usr/bin
-export PATH=$PATH:/usr/sbin
-export PATH=$PATH:~/.cabal/bin
-export PATH=$PATH:~/.local/bin
-export PATH=$PATH:~/.stack/programs/x86_64-osx/ghc-8.2.1/bin
-export PATH=$PATH:~/.stack/programs/x86_64-osx/ghc-8.0.2/bin
-export PATH=$PATH:~/.stack/programs/x86_64-osx/ghc-7.10.3/bin
-export PATH=$PATH:~/habito-web/node_modules/purescript/bin
-export PATH=$PATH:/Library/TeX/texbin
-export PATH=$PATH:~/.cargo/bin
-export PATH=$HOME/bin:/usr/local/bin:$PATH
-export PATH=$PATH:/Library/Frameworks/Mono.framework/Versions/Current/Commands
-export PATH="$HOME/Library/Haskell/bin:$PATH"
-export PATH=$PATH:~/.stack/programs/x86_64-osx/ghc-8.2.2/bin
-
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
 # Aliases
@@ -48,7 +27,6 @@ alias import='ag --nocolor --nogroup --nofilename "import qualified (\S+)(\s)+as
 alias tags='fast-tags . -R'
 alias vim='nvim'
 alias vi='/usr/local/Cellar/vim/8.0.0596/bin/vim'
-export PATH="/usr/local/opt/libxml2/bin:$PATH"
 
 export FZF_DEFAULT_COMMAND='
   (git ls-tree -r --name-only HEAD ||

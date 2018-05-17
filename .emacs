@@ -23,7 +23,6 @@
 (global-prettify-symbols-mode t)
 (paredit-mode 1)
 
-;; Font
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -78,10 +77,12 @@
   (setq evil-motion-state-modes nil)
   (evil-paredit-mode 1))
 
-(use-package popwin
+(use-package shackle
   :ensure t
   :config
-  (popwin-mode 1))
+  (shackle-mode 1)
+  (setq shackle-rules '(("\\`\\*helm.*?\\*\\'" :regexp t :align t :ratio 0.4)
+			(compilation-mode :noselect t))))
 
 (use-package company
   :ensure t
@@ -111,6 +112,7 @@
   (setq helm-buffers-fuzzy-matching t)
   (setq helm-autoresize-mode nil)
   (setq helm-buffer-max-length 40)
+  (setq helm-display-function 'pop-to-buffer) ; make helm play nice
   (define-key helm-map (kbd "S-SPC") 'helm-toggle-visible-mark)
   (define-key helm-find-files-map (kbd "C-h") 'helm-find-files-up-one-level)
   (define-key helm-find-files-map (kbd "C-k") 'helm-previous-line)
@@ -162,8 +164,6 @@
 
 ;; (setq coq-prog-name "/Applications/CoqIDE_8.6.1.app/Contents/Resources/bin/coqtop")
 
-(define-key org-mode-map (kbd "C-c p") 'org-latex-export-to-pdf)
-
 ;;-------------------------------------------------------------------------------- 
 ;; Key bindings
 
@@ -191,21 +191,28 @@
 (imap "C-g" 'evil-normal-state)
 
 (evil-leader/set-key
-  "ee" 'eval-last-sexp
-  "ev" 'open-dotemacs
-  "p" 'helm-ls-git-ls
-  "f" 'helm-do-grep-ag
-  "tr" 'linum-relative-mode
-  "tn" 'linum-mode
+  "ee"	'eval-last-sexp
+  "ev"	'open-dotemacs
+  "p"	'helm-ls-git-ls
+  "f"	'helm-do-grep-ag
+  "aa"	'align-regexp
   "TAB" 'helm-buffers-list
+  "SPC" 'helm-projectile
   ;; Git
-  "gs" 'magit-status
-  "gp" 'magit-pull
-  "gu" 'magit-push-popup
-  "gc" 'magit-commit
-  "gb" 'magit-blame
-  "gd" 'magit-diff
-  "ga" 'magit-stage
+  "gs"  'magit-status
+  "gp"  'magit-pull
+  "gu"  'magit-push-popup
+  "gc"  'magit-commit
+  "gb"  'magit-blame
+  "gd"  'magit-diff
+  "ga"  'magit-stage
+  "ghp" 'diff-hl-diff-goto-hunk
+  "ghu" 'diff-hl-revert-hunk
+  ;; Org
+  "op"  'org-latex-export-to-pdf
+  ;; Toggles
+  "tr"	'linum-relative-mode
+  "tn"	'linum-mode
   )
 
 (defun open-dotemacs (&optional arg)
@@ -281,7 +288,7 @@
 ;;   (setenv "PATH" (concat "/~/cs/bin:" (getenv "PATH")))
 ;;   (define-key eshell-mode-map (kbd "M-s") 'other-window-or-split))
 
-;; (ad
+;; (add-hook 'eshell-mode-hook 'eshell-mode-hook-func)
 
 ;;;-------------------------------------------------------------------------------- 
 
@@ -322,7 +329,7 @@
  '(ansi-color-names-vector ["#000000" "light gray" "dark gray" "light slate gray"])
  '(custom-safe-themes
    (quote
-    ("a3fa4abaf08cc169b61dea8f6df1bbe4123ec1d2afeb01c17e11fdc31fc66379" "3a3de615f80a0e8706208f0a71bbcc7cc3816988f971b6d237223b6731f91605" "fa2b58bb98b62c3b8cf3b6f02f058ef7827a8e497125de0254f56e373abee088" "cc0dbb53a10215b696d391a90de635ba1699072745bf653b53774706999208e3" "3e335d794ed3030fefd0dbd7ff2d3555e29481fe4bbb0106ea11c660d6001767" "a2dd771a05705be2a6e6adb6ddbc7a27ebf49edab1dffdbefe243096becba7c9" "a25c42c5e2a6a7a3b0331cad124c83406a71bc7e099b60c31dc28a1ff84e8c04" "c259628fbeed876031537c380f3f2ebe084fe5107f5db63edd4fc1bbdab9cba7" default)))
+    ("39dd7106e6387e0c45dfce8ed44351078f6acd29a345d8b22e7b8e54ac25bac4" "48d9bc7ab7f35488dc3e6376ae19eea20223bafeda2b662c4c519c328423a8d2" "8e13d909a2a7aba5d4b77511d3920733f5d45d5463ddc233e7aa77a95f4dfa6d" "39fe48be738ea23b0295cdf17c99054bb439a7d830248d7e6493c2110bfed6f8" "9fcac3986e3550baac55dc6175195a4c7537e8aa082043dcbe3f93f548a3a1e0" "242527ce24b140d304381952aa7a081179a9848d734446d913ca8ef0af3cef21" "44247f2a14c661d96d2bff302f1dbf37ebe7616935e4682102b68c0b6cc80095" "31992d4488dba5b28ddb0c16914bf5726dc41588c2b1c1a2fd16516ea92c1d8e" "78559045fb299f3542c232166ad635c59cf0c6578d80a58b885deafe98a36c66" "a3fa4abaf08cc169b61dea8f6df1bbe4123ec1d2afeb01c17e11fdc31fc66379" "3a3de615f80a0e8706208f0a71bbcc7cc3816988f971b6d237223b6731f91605" "fa2b58bb98b62c3b8cf3b6f02f058ef7827a8e497125de0254f56e373abee088" "cc0dbb53a10215b696d391a90de635ba1699072745bf653b53774706999208e3" "3e335d794ed3030fefd0dbd7ff2d3555e29481fe4bbb0106ea11c660d6001767" "a2dd771a05705be2a6e6adb6ddbc7a27ebf49edab1dffdbefe243096becba7c9" "a25c42c5e2a6a7a3b0331cad124c83406a71bc7e099b60c31dc28a1ff84e8c04" "c259628fbeed876031537c380f3f2ebe084fe5107f5db63edd4fc1bbdab9cba7" default)))
  '(exec-path
    (quote
     ("/Users/cs/.cargo/bin" "/usr/local/bin" "/usr/bin" "/bin" "/usr/sbin" "/sbin" "/Library/TeX/texbin" "/Library/Frameworks/Mono.framework/Versions/Current/Commands" "/Applications/Wireshark.app/Contents/MacOS" "/Users/cs/Dev/emacs-mac/lib-src" "/Users/cs/.cabal/bin")))
@@ -335,7 +342,9 @@
  '(org-entities-user (quote (("mathbb" "mathbb" nil "" "*" "" ""))))
  '(package-selected-packages
    (quote
-    (fzf exec-path-from-shell doom-themes molokai-theme spacemacs-theme writeroom-mode reveal-in-osx-finder ag ivy org-ref minimal-theme white-theme white-sand-theme org-bullets which-key vimrc-mode vdiff-magit use-package stack-mode slack sexy-monochrome-theme scribble-mode projectile popwin paredit-everywhere org-pdfview markdown-mode linum-relative interleave helm-ls-git helm-ghc eyebrowse evil-tabs evil-surround evil-paredit evil-org evil-numbers evil-magit evil-leader evil-indent-plus evil-expat evil-cleverparens diff-hl company-ghc company-coq boogie-friends auctex 0blayout)))
+    (monochrome-theme window-purpose shackle helm-projectile fzf exec-path-from-shell writeroom-mode reveal-in-osx-finder ag ivy org-ref minimal-theme org-bullets which-key vimrc-mode vdiff-magit use-package stack-mode slack scribble-mode projectile paredit-everywhere org-pdfview markdown-mode linum-relative interleave helm-ls-git helm-ghc eyebrowse evil-tabs evil-surround evil-paredit evil-org evil-numbers evil-magit evil-leader evil-indent-plus evil-expat evil-cleverparens diff-hl company-ghc company-coq boogie-friends auctex 0blayout)))
+ '(pdf-view-midnight-colors (quote ("#eeeeee" . "#000000")))
+ '(projectile-mode t nil (projectile))
  '(vc-annotate-background "#ffffff")
  '(vc-annotate-color-map
    (quote
@@ -383,3 +392,20 @@
 (put 'narrow-to-region 'disabled nil)
 
 (setenv "PATH" (concat "/Users/cs/.local/bin:/Users/cs/.cabal/bin:" (getenv "PATH")))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(default ((((class color) (min-colors 89)) (:family "Iosevka" :background "white" :foreground "grey20"))))
+ '(org-block ((((class color) (min-colors 89)) (:background "grey98"))))
+ '(org-level-1 ((((class color) (min-colors 89)) (:foreground "grey20" :height 1.6))))
+ '(org-level-2 ((((class color) (min-colors 89)) (:foreground "grey20" :height 1.5))))
+ '(org-level-3 ((((class color) (min-colors 89)) (:foreground "grey20" :height 1.4))))
+ '(org-level-4 ((((class color) (min-colors 89)) (:foreground "grey20" :height 1.3))))
+ '(org-meta-line ((t (:family "Iosevka" :height 1))))
+ '(org-table ((((class color) (min-colors 89)) (:background "grey98"))))
+ '(org-tag ((((class color) (min-colors 89)) (:background "grey98" :foreground "grey20"))))
+ '(org-todo ((((class color) (min-colors 89)) (:background "grey90" :foreground "grey20" :weight bold))))
+ '(shm-current-face ((t (:background "#f0f0f0"))))
+ '(shm-quarantine-face ((t (:background "#a0a0a0")))))
