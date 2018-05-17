@@ -102,11 +102,6 @@
   :init
   ;; Note: these settings break "C-h m" in helm (which is not too
   ;; useful anyway)
-  ;; (add-to-list 'display-buffer-alist
-  ;; 	       `(,(rx bos "*helm" (* not-newline) "*" eos)
-  ;; 		 (display-buffer-in-side-window)
-  ;; 		 (inhibit-same-window . t)
-  ;; 		 (window-height . 0.3)))
   :config
   (helm-mode 1)
   (setq helm-buffers-fuzzy-matching t)
