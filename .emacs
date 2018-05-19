@@ -22,13 +22,14 @@
 (when window-system (scroll-bar-mode -1))
 (global-prettify-symbols-mode t)
 (paredit-mode 1)
+(setq ediff-split-window-function 'split-window-horizontally)
 
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "Iosevka" :height 120))))
+ '(default ((((class color) (min-colors 89)) (:family "Iosevka" :weight light foreground "grey20" :height 120))))
  '(org-block ((t (:family "Iosevka"))))
  '(org-level-1 ((t (:family "ETBembo" :height 1.6))))
  '(org-level-2 ((t (:family "ETBembo" :height 1.3))))
@@ -40,6 +41,7 @@
  '(org-todo ((t (:family "Iosevka" :height 1))))
  '(shm-current-face ((t (:background "#f0f0f0"))))
  '(shm-quarantine-face ((t (:background "#a0a0a0")))))
+
 
 (add-hook 'org-mode-hook
 	  (lambda ()
@@ -65,7 +67,7 @@
 (require 'shm)
 
 (use-package evil
-  :ensure 
+  :ensure t
   :config
   (evil-mode 1)
   (setq evil-want-abbrev-expand-on-insert-exit nil) ; abbrevs are very annoying when in coq
@@ -76,6 +78,12 @@
   (setq evil-emacs-state-modes nil)
   (setq evil-motion-state-modes nil)
   (evil-paredit-mode 1))
+
+(use-package magit
+  :ensure t)
+
+(use-package evil-magit
+  :ensure t)
 
 (use-package shackle
   :ensure t
@@ -181,6 +189,8 @@
 ;(nmap "C-a" 'evil-numbers/inc-at-pt)
 ;(nmap "C-X" 'evil-numbers/dec-at-pt)
 ;(nmap "C-u" 'evil-scroll-page-up)
+(nmap "C-k" 'previous-match)
+(nmap "C-j" 'next-match)
 (nmap "C-p" 'helm-find-files)
 (nmap "A-f" 'helm-recentf)
 (imap "C-g" 'evil-normal-state)
@@ -199,7 +209,7 @@
   "gu"  'magit-push-popup
   "gc"  'magit-commit
   "gb"  'magit-blame
-  "gd"  'magit-diff
+  "gd"  'magit-diff-buffer-file
   "ga"  'magit-stage
   "ghp" 'diff-hl-diff-goto-hunk
   "ghu" 'diff-hl-revert-hunk
@@ -220,19 +230,23 @@
 (add-hook 'haskell-mode-hook
 	  (lambda () (local-set-key (kbd "<f8>") 'haskell-navigate-imports)))
 
-;; (require 'proof-site "~/.emacs.d/lisp/PG/generic/proof-site")
-;; (add-hook 'coq-mode-hook
-;;           (lambda ()
-;;             (company-coq-mode)
-;;             (evil-define-key 'normal coq-mode-map (kbd "<down>") 'proof-assert-next-command-interactive)
-;;             (evil-define-key 'normal coq-mode-map (kbd "<up>") 'proof-undo-last-successful-command)
-;;             (evil-define-key 'normal coq-mode-map (kbd "<return>") 'company-coq-proof-goto-point)
-;;             (abbrev-mode 0)))
-;; (setq proof-three-window-mode-policy 'hybrid)
-;; (setq proof-follow-mode 'ignore)
-;; (setq proof-splash-enable nil)
-
 ;; (setq ghc "/Users/cs/.stack/programs/x86_64-osx/ghc-8.2.1/bin/ghc")
+
+;;-------------------------------------------------------------------------------- 
+;; Coq stuff
+
+(require 'proof-site "~/.emacs.d/lisp/PG/generic/proof-site")
+(add-hook 'coq-mode-hook
+          (lambda ()
+            (company-coq-mode)
+            (evil-define-key 'normal coq-mode-map (kbd "<down>") 'proof-assert-next-command-interactive)
+            (evil-define-key 'normal coq-mode-map (kbd "<up>") 'proof-undo-last-successful-command)
+            (evil-define-key 'normal coq-mode-map (kbd "<return>") 'company-coq-proof-goto-point)
+            (abbrev-mode 0)))
+(setq proof-three-window-mode-policy 'hybrid)
+(setq proof-follow-mode 'ignore)
+(setq proof-splash-enable nil)
+
 
 ;; (setq TeX-auto-save t)
 ;; (setq TeX-pare-self t)
@@ -324,7 +338,7 @@
  '(ansi-color-names-vector ["#000000" "light gray" "dark gray" "light slate gray"])
  '(custom-safe-themes
    (quote
-    ("39dd7106e6387e0c45dfce8ed44351078f6acd29a345d8b22e7b8e54ac25bac4" "48d9bc7ab7f35488dc3e6376ae19eea20223bafeda2b662c4c519c328423a8d2" "8e13d909a2a7aba5d4b77511d3920733f5d45d5463ddc233e7aa77a95f4dfa6d" "39fe48be738ea23b0295cdf17c99054bb439a7d830248d7e6493c2110bfed6f8" "9fcac3986e3550baac55dc6175195a4c7537e8aa082043dcbe3f93f548a3a1e0" "242527ce24b140d304381952aa7a081179a9848d734446d913ca8ef0af3cef21" "44247f2a14c661d96d2bff302f1dbf37ebe7616935e4682102b68c0b6cc80095" "31992d4488dba5b28ddb0c16914bf5726dc41588c2b1c1a2fd16516ea92c1d8e" "78559045fb299f3542c232166ad635c59cf0c6578d80a58b885deafe98a36c66" "a3fa4abaf08cc169b61dea8f6df1bbe4123ec1d2afeb01c17e11fdc31fc66379" "3a3de615f80a0e8706208f0a71bbcc7cc3816988f971b6d237223b6731f91605" "fa2b58bb98b62c3b8cf3b6f02f058ef7827a8e497125de0254f56e373abee088" "cc0dbb53a10215b696d391a90de635ba1699072745bf653b53774706999208e3" "3e335d794ed3030fefd0dbd7ff2d3555e29481fe4bbb0106ea11c660d6001767" "a2dd771a05705be2a6e6adb6ddbc7a27ebf49edab1dffdbefe243096becba7c9" "a25c42c5e2a6a7a3b0331cad124c83406a71bc7e099b60c31dc28a1ff84e8c04" "c259628fbeed876031537c380f3f2ebe084fe5107f5db63edd4fc1bbdab9cba7" default)))
+    ("93d0850a38ed83b05995f29c003dbb63fec3e9c5e4670118f7b91576bd7e0494" "8fbfefa40f91e72fde490db47740b52a5d9f2425b637aa9340efd31791a3abc9" "39dd7106e6387e0c45dfce8ed44351078f6acd29a345d8b22e7b8e54ac25bac4" "48d9bc7ab7f35488dc3e6376ae19eea20223bafeda2b662c4c519c328423a8d2" "8e13d909a2a7aba5d4b77511d3920733f5d45d5463ddc233e7aa77a95f4dfa6d" "39fe48be738ea23b0295cdf17c99054bb439a7d830248d7e6493c2110bfed6f8" "9fcac3986e3550baac55dc6175195a4c7537e8aa082043dcbe3f93f548a3a1e0" "242527ce24b140d304381952aa7a081179a9848d734446d913ca8ef0af3cef21" "44247f2a14c661d96d2bff302f1dbf37ebe7616935e4682102b68c0b6cc80095" "31992d4488dba5b28ddb0c16914bf5726dc41588c2b1c1a2fd16516ea92c1d8e" "78559045fb299f3542c232166ad635c59cf0c6578d80a58b885deafe98a36c66" "a3fa4abaf08cc169b61dea8f6df1bbe4123ec1d2afeb01c17e11fdc31fc66379" "3a3de615f80a0e8706208f0a71bbcc7cc3816988f971b6d237223b6731f91605" "fa2b58bb98b62c3b8cf3b6f02f058ef7827a8e497125de0254f56e373abee088" "cc0dbb53a10215b696d391a90de635ba1699072745bf653b53774706999208e3" "3e335d794ed3030fefd0dbd7ff2d3555e29481fe4bbb0106ea11c660d6001767" "a2dd771a05705be2a6e6adb6ddbc7a27ebf49edab1dffdbefe243096becba7c9" "a25c42c5e2a6a7a3b0331cad124c83406a71bc7e099b60c31dc28a1ff84e8c04" "c259628fbeed876031537c380f3f2ebe084fe5107f5db63edd4fc1bbdab9cba7" default)))
  '(exec-path
    (quote
     ("/Users/cs/.cargo/bin" "/usr/local/bin" "/usr/bin" "/bin" "/usr/sbin" "/sbin" "/Library/TeX/texbin" "/Library/Frameworks/Mono.framework/Versions/Current/Commands" "/Applications/Wireshark.app/Contents/MacOS" "/Users/cs/Dev/emacs-mac/lib-src" "/Users/cs/.cabal/bin")))
@@ -337,9 +351,10 @@
  '(org-entities-user (quote (("mathbb" "mathbb" nil "" "*" "" ""))))
  '(package-selected-packages
    (quote
-    (monochrome-theme window-purpose shackle helm-projectile fzf exec-path-from-shell writeroom-mode reveal-in-osx-finder ag ivy org-ref minimal-theme org-bullets which-key vimrc-mode vdiff-magit use-package stack-mode slack scribble-mode projectile paredit-everywhere org-pdfview markdown-mode linum-relative interleave helm-ls-git helm-ghc eyebrowse evil-tabs evil-surround evil-paredit evil-org evil-numbers evil-magit evil-leader evil-indent-plus evil-expat evil-cleverparens diff-hl company-ghc company-coq boogie-friends auctex 0blayout)))
+    (epresent monochrome-theme window-purpose shackle helm-projectile fzf exec-path-from-shell writeroom-mode reveal-in-osx-finder ag ivy org-ref minimal-theme org-bullets which-key vimrc-mode vdiff-magit use-package stack-mode slack scribble-mode projectile paredit-everywhere org-pdfview markdown-mode linum-relative interleave helm-ls-git helm-ghc eyebrowse evil-tabs evil-surround evil-paredit evil-org evil-numbers evil-magit evil-leader evil-indent-plus evil-expat evil-cleverparens diff-hl company-ghc company-coq boogie-friends auctex 0blayout)))
  '(pdf-view-midnight-colors (quote ("#eeeeee" . "#000000")))
  '(projectile-mode t nil (projectile))
+ '(proof-toolbar-enable t)
  '(vc-annotate-background "#ffffff")
  '(vc-annotate-color-map
    (quote
@@ -387,20 +402,3 @@
 (put 'narrow-to-region 'disabled nil)
 
 (setenv "PATH" (concat "/Users/cs/.local/bin:/Users/cs/.cabal/bin:" (getenv "PATH")))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(default ((((class color) (min-colors 89)) (:family "Iosevka" :background "white" :foreground "grey20"))))
- '(org-block ((((class color) (min-colors 89)) (:background "grey98"))))
- '(org-level-1 ((((class color) (min-colors 89)) (:foreground "grey20" :height 1.6))))
- '(org-level-2 ((((class color) (min-colors 89)) (:foreground "grey20" :height 1.5))))
- '(org-level-3 ((((class color) (min-colors 89)) (:foreground "grey20" :height 1.4))))
- '(org-level-4 ((((class color) (min-colors 89)) (:foreground "grey20" :height 1.3))))
- '(org-meta-line ((t (:family "Iosevka" :height 1))))
- '(org-table ((((class color) (min-colors 89)) (:background "grey98"))))
- '(org-tag ((((class color) (min-colors 89)) (:background "grey98" :foreground "grey20"))))
- '(org-todo ((((class color) (min-colors 89)) (:background "grey90" :foreground "grey20" :weight bold))))
- '(shm-current-face ((t (:background "#f0f0f0"))))
- '(shm-quarantine-face ((t (:background "#a0a0a0")))))

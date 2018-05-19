@@ -6,6 +6,7 @@ COMPLETION_WAITING_DOTS="true"
 DISABLE_UNTRACKED_FILES_DIRTY="true"
 plugins=(git osx vi-mode dirstack haskell wd)
 source $ZSH/oh-my-zsh.sh
+source ~/.profile
 export SSH_KEY_PATH="~/.ssh/rsa_id"
 
 PROMPT='λ '
