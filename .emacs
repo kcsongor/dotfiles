@@ -29,23 +29,19 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((((class color) (min-colors 89)) (:family "Iosevka" :weight light foreground "grey20" :height 120))))
+ '(default ((((class color) (min-colors 89)) (:family "Iosevka" :weight thin :height 130))))
  '(org-block ((t (:family "Iosevka"))))
- '(org-level-1 ((t (:family "ETBembo" :height 1.6))))
- '(org-level-2 ((t (:family "ETBembo" :height 1.3))))
- '(org-level-3 ((t (:family "ETBembo" :height 1.2))))
- '(org-level-4 ((t (:family "ETBembo" :height 1.1))))
+ '(org-level-1 ((t (:family "Iosevka" :height 1.6))))
+ '(org-level-2 ((t (:family "Iosevka" :height 1.3))))
+ '(org-level-3 ((t (:family "Iosevka" :height 1.2))))
+ '(org-level-4 ((t (:family "Iosevka" :height 1.1))))
  '(org-meta-line ((t (:family "Iosevka" :height 1))))
  '(org-table ((t (:family "Iosevka" :height 1))))
- '(org-tag ((t (:family "ETBembo" :height 0.6))))
+ '(org-tag ((t (:family "Iosevka" :height 0.6))))
  '(org-todo ((t (:family "Iosevka" :height 1))))
  '(shm-current-face ((t (:background "#f0f0f0"))))
  '(shm-quarantine-face ((t (:background "#a0a0a0")))))
 
-
-(add-hook 'org-mode-hook
-	  (lambda ()
-	    (face-remap-add-relative 'default :family "ETBembo" :height 130)))
 
 (setq org-startup-indented t
       org-bullets-bullet-list '(" ") ;; no bullets, needs org-bullets package
@@ -62,15 +58,15 @@
 ;; Packages
 (add-to-list 'load-path "~/.emacs.d/lisp/")
 (add-to-list 'load-path "~/Dev/haskell/structured-haskell-mode/elisp/")
-(use-package org-pretty-table)
-(load "rogue")
 (require 'shm)
+(require 'ott-mode)
 
 (use-package evil
   :ensure t
   :config
   (evil-mode 1)
   (setq evil-want-abbrev-expand-on-insert-exit nil) ; abbrevs are very annoying when in coq
+  (setq abbrev-expand-function #'ignore)
   (evil-leader-mode t)
   (setq evil-leader/leader "<SPC>")
   (global-evil-leader-mode 1)
@@ -139,6 +135,8 @@
     (evil-define-key 'normal pdf-view-mode-map (kbd "k") 'pdf-view-previous-page)
     (evil-define-key 'normal pdf-view-mode-map (kbd "u") 'pdf-view-revert-buffer)
     (evil-define-key 'normal pdf-view-mode-map (kbd "/") 'pdf-occur)
+    (evil-define-key 'normal pdf-view-mode-map (kbd "+") 'pdf-view-enlarge)
+    (evil-define-key 'normal pdf-view-mode-map (kbd "-") 'pdf-view-shrink)
     (use-package org-pdfview
       :ensure t))
 
@@ -164,6 +162,14 @@
 	      ("C-n" . company-select-next)
 	      ("C-p" . company-select-previous)
 	      ("C-l" . company-complete-selection)))
+
+(use-package linum-relative
+  :ensure t
+  :config
+;; Use `display-line-number-mode` as linum-mode's backend for smooth performance
+  (setq linum-relative-backend 'display-line-numbers-mode)
+  (setq linum-relative-format "%3s ")
+  )
 
 ;; (setq coq-prog-name "/Applications/CoqIDE_8.6.1.app/Contents/Resources/bin/coqtop")
 
@@ -242,11 +248,19 @@
             (evil-define-key 'normal coq-mode-map (kbd "<down>") 'proof-assert-next-command-interactive)
             (evil-define-key 'normal coq-mode-map (kbd "<up>") 'proof-undo-last-successful-command)
             (evil-define-key 'normal coq-mode-map (kbd "<return>") 'company-coq-proof-goto-point)
-            (abbrev-mode 0)))
-(setq proof-three-window-mode-policy 'hybrid)
-(setq proof-follow-mode 'ignore)
-(setq proof-splash-enable nil)
-
+            (abbrev-mode 0)
+	    (setq proof-three-window-mode-policy 'hybrid)
+	    (setq proof-follow-mode 'ignore)
+	    (setq proof-splash-enable nil)
+	    (defface proof-locked-face
+	    (proof-face-specs
+	    ;; This colour is quite subjective and may be best chosen according
+	    ;; to the type of display you have.
+	    (:background "#eaf8ff")
+	    (:background "#222288")
+	    (:underline t))
+	    "*Face for locked region of proof script (processed commands)."
+	    :group 'proof-faces)))
 
 ;; (setq TeX-auto-save t)
 ;; (setq TeX-pare-self t)
@@ -342,6 +356,7 @@
  '(exec-path
    (quote
     ("/Users/cs/.cargo/bin" "/usr/local/bin" "/usr/bin" "/bin" "/usr/sbin" "/sbin" "/Library/TeX/texbin" "/Library/Frameworks/Mono.framework/Versions/Current/Commands" "/Applications/Wireshark.app/Contents/MacOS" "/Users/cs/Dev/emacs-mac/lib-src" "/Users/cs/.cabal/bin")))
+ '(eyebrowse-mode t)
  '(fci-rule-color "#858FA5" t)
  '(haskell-process-type (quote cabal-new-repl))
  '(jdee-db-active-breakpoint-face-colors (cons "#100e23" "#906cff"))
@@ -351,7 +366,7 @@
  '(org-entities-user (quote (("mathbb" "mathbb" nil "" "*" "" ""))))
  '(package-selected-packages
    (quote
-    (epresent monochrome-theme window-purpose shackle helm-projectile fzf exec-path-from-shell writeroom-mode reveal-in-osx-finder ag ivy org-ref minimal-theme org-bullets which-key vimrc-mode vdiff-magit use-package stack-mode slack scribble-mode projectile paredit-everywhere org-pdfview markdown-mode linum-relative interleave helm-ls-git helm-ghc eyebrowse evil-tabs evil-surround evil-paredit evil-org evil-numbers evil-magit evil-leader evil-indent-plus evil-expat evil-cleverparens diff-hl company-ghc company-coq boogie-friends auctex 0blayout)))
+    (helm-itunes epresent monochrome-theme window-purpose shackle helm-projectile fzf exec-path-from-shell writeroom-mode reveal-in-osx-finder ag ivy org-ref minimal-theme org-bullets which-key vimrc-mode vdiff-magit use-package stack-mode slack scribble-mode projectile paredit-everywhere org-pdfview markdown-mode linum-relative interleave helm-ls-git helm-ghc eyebrowse evil-tabs evil-surround evil-paredit evil-org evil-numbers evil-magit evil-leader evil-indent-plus evil-expat evil-cleverparens diff-hl company-ghc company-coq boogie-friends auctex 0blayout)))
  '(pdf-view-midnight-colors (quote ("#eeeeee" . "#000000")))
  '(projectile-mode t nil (projectile))
  '(proof-toolbar-enable t)

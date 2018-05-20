@@ -9,8 +9,8 @@ source $ZSH/oh-my-zsh.sh
 source ~/.profile
 export SSH_KEY_PATH="~/.ssh/rsa_id"
 
-PROMPT='λ '
-export REFINED_PROMPT_SYMBOL='λ'
+PROMPT='$ '
+export REFINED_PROMPT_SYMBOL='$'
 export PAGER="less"
 export EDITOR='nvim'
 
