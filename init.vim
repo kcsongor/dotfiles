@@ -28,12 +28,42 @@ Plug 'majutsushi/tagbar'
 Plug 'mattn/gist-vim'
 Plug 'mattn/webapi-vim'
 Plug 'mbbill/undotree'
+Plug 'radenling/vim-dispatch-neovim'
 Plug 'tpope/vim-commentary'
 Plug 'tpope/vim-dispatch'
-Plug 'radenling/vim-dispatch-neovim'
 Plug 'tpope/vim-fugitive'
 Plug 'tpope/vim-rhubarb'
 call plug#end()
+"PRESENTATIONS {{{1
+
+if (!exists('g:presentation_mode'))
+  let g:presentation_mode = 0
+endif
+
+function! init#check_presentation_mode()
+  if (g:presentation_mode)
+    set foldlevel=0
+    set laststatus=0
+    setlocal conceallevel=3
+    setlocal concealcursor=nvic
+    silent! call matchadd('Conceal', '{{{[0-9]\?', 100, 68)
+    silent! call matchadd('Conceal', '_p[0-9]', 100, 69)
+    set colorcolumn=0
+  else
+    set foldlevel=3
+    set laststatus=2
+    setlocal conceallevel=0
+    silent! call matchdelete(68)
+    silent! call matchdelete(69)
+    set colorcolumn=80
+  endif
+endfunction
+
+function! init#toggle_presentation_mode()
+  let g:presentation_mode = abs(g:presentation_mode - 1)
+  call init#check_presentation_mode()
+endfunction
+
 "COLOURS {{{1
 call colours#update_background()
 call colours#lazy_colorscheme('monochrome')
@@ -51,14 +81,12 @@ set statusline+=\ %n\
 set statusline+=%#Status1#
 set statusline+=\ %f:%l:%c\ \|
 set statusline+=%#Status1#
-set statusline+=%{notes#statusline()}
-"set statusline+=%{tagbar#currenttag(\"[%s]\",\"\")}
 set statusline+=%=
 set statusline+=%{refactor#refactoring_mode()}
 set statusline+=%m
 set statusline+=%{init#status_new_file()}
 set statusline+=%#Status0#
-set statusline+=\ %{fugitive#head()}\ %p%%\ 
+"set statusline+=\ %{fugitive#head()}\ %p%%\ 
 
 "GENERAL SETTINGS {{{1
 set exrc
@@ -113,6 +141,10 @@ set iskeyword+=-
 
 " Tabline
 set tabline=%!tabbar#tabline()
+
+function! init#empty_foldtext()
+  return ""
+endfunction
 
 " Fold text
 set foldtext=init#fold_test()
@@ -216,6 +248,12 @@ vnoremap <leader>f "oy   :Ag! <C-R>o<cr>
 
 " Formatting {{{2
 nnoremap <leader>t     :Tabularize/
+
+" Presentation {{{2
+nnoremap <leader>tp    :call init#toggle_presentation_mode()<cr>
+" NOTE: set foldlevel to 0
+nnoremap <Down> zjzxjzt[zzt
+nnoremap <Up> zkzxkzt[zzt
 
 " Buffers {{{2
 nnoremap <leader><Tab> :Buffers<cr>
@@ -570,3 +608,45 @@ let g:undotree_WindowLayout = 3
 set secure
 
 "}}}
+
+
+" Peek definition of function below the cursor
+nnoremap <leader>great :redir @a \| :echo expand('<cword>') \| :redir END \| :bel new \| :setlocal buftype=nofile \| :setlocal bufhidden=hide \| :norm "apddg]1<CR>
+
+nnoremap <leader>pw :call PreviewWord()<cr>
+func! PreviewWord()
+  if &previewwindow " don't do this in the preview window
+    return
+  endif
+  let w = expand("<cword>") " get the word under cursor
+  if w =~ '\a' " if the word contains a letter
+
+    " Delete any existing highlight before showing another tag
+    silent! wincmd P " jump to preview window
+    if &previewwindow " if we really get there...
+      match none " delete existing highlight
+      wincmd p " back to old window
+    endif
+
+    " Try displaying a matching tag for the word under the cursor
+    try
+       exe "ptag " . w
+    catch
+      return
+    endtry
+
+    silent! wincmd P " jump to preview window
+    if &previewwindow " if we really get there...
+      if has("folding")
+        silent! .foldopen " don't want a closed fold
+      endif
+      call search("$", "b") " to end of previous line
+      let w = substitute(w, '\\', '\\\\', "")
+      call search('\<\V' . w . '\>') " position cursor on match
+      " Add a match highlight to the word at this position
+      hi previewWord term=bold ctermbg=green guibg=green
+      exe 'match previewWord "\%' . line(".") . 'l\%' . col(".") . 'c\k*"'
+      wincmd p " back to old window
+    endif
+  endif
+endfun

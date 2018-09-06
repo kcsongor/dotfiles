@@ -29,7 +29,7 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((((class color) (min-colors 89)) (:family "Iosevka" :weight thin :height 130))))
+ '(default ((((class color) (min-colors 89)) (:family "Iosevka" :weight normal :height 120))))
  '(org-block ((t (:family "Iosevka"))))
  '(org-level-1 ((t (:family "Iosevka" :height 1.6))))
  '(org-level-2 ((t (:family "Iosevka" :height 1.3))))
@@ -59,7 +59,7 @@
 (add-to-list 'load-path "~/.emacs.d/lisp/")
 (add-to-list 'load-path "~/Dev/haskell/structured-haskell-mode/elisp/")
 (require 'shm)
-(require 'ott-mode)
+;; (require 'ott-mode)
 
 (use-package evil
   :ensure t
@@ -224,7 +224,16 @@
   ;; Toggles
   "tr"	'linum-relative-mode
   "tn"	'linum-mode
+  "l,"	'eyebrowse-rename-window-config
   )
+
+;; Eyebrowse map 0-9
+(defmacro eyebrowse-mappings (numbers)
+  `(mapcar
+    (lambda (x) `(,(format "l%d" x)
+	     ',(intern (format "eyebrowse-switch-to-window-config-%d" x))))
+    ,numbers))
+(eval `(evil-leader/set-key ,@(apply #'append (eyebrowse-mappings (number-sequence 0 9)))))
 
 (defun open-dotemacs (&optional arg)
   (interactive "p") (find-file "~/.emacs"))
@@ -352,7 +361,7 @@
  '(ansi-color-names-vector ["#000000" "light gray" "dark gray" "light slate gray"])
  '(custom-safe-themes
    (quote
-    ("93d0850a38ed83b05995f29c003dbb63fec3e9c5e4670118f7b91576bd7e0494" "8fbfefa40f91e72fde490db47740b52a5d9f2425b637aa9340efd31791a3abc9" "39dd7106e6387e0c45dfce8ed44351078f6acd29a345d8b22e7b8e54ac25bac4" "48d9bc7ab7f35488dc3e6376ae19eea20223bafeda2b662c4c519c328423a8d2" "8e13d909a2a7aba5d4b77511d3920733f5d45d5463ddc233e7aa77a95f4dfa6d" "39fe48be738ea23b0295cdf17c99054bb439a7d830248d7e6493c2110bfed6f8" "9fcac3986e3550baac55dc6175195a4c7537e8aa082043dcbe3f93f548a3a1e0" "242527ce24b140d304381952aa7a081179a9848d734446d913ca8ef0af3cef21" "44247f2a14c661d96d2bff302f1dbf37ebe7616935e4682102b68c0b6cc80095" "31992d4488dba5b28ddb0c16914bf5726dc41588c2b1c1a2fd16516ea92c1d8e" "78559045fb299f3542c232166ad635c59cf0c6578d80a58b885deafe98a36c66" "a3fa4abaf08cc169b61dea8f6df1bbe4123ec1d2afeb01c17e11fdc31fc66379" "3a3de615f80a0e8706208f0a71bbcc7cc3816988f971b6d237223b6731f91605" "fa2b58bb98b62c3b8cf3b6f02f058ef7827a8e497125de0254f56e373abee088" "cc0dbb53a10215b696d391a90de635ba1699072745bf653b53774706999208e3" "3e335d794ed3030fefd0dbd7ff2d3555e29481fe4bbb0106ea11c660d6001767" "a2dd771a05705be2a6e6adb6ddbc7a27ebf49edab1dffdbefe243096becba7c9" "a25c42c5e2a6a7a3b0331cad124c83406a71bc7e099b60c31dc28a1ff84e8c04" "c259628fbeed876031537c380f3f2ebe084fe5107f5db63edd4fc1bbdab9cba7" default)))
+    ("ee2f8a2d786f1ce5f7633b370a8ae05950306d673beed5d1bd04d0164b5e4e62" "93d0850a38ed83b05995f29c003dbb63fec3e9c5e4670118f7b91576bd7e0494" "8fbfefa40f91e72fde490db47740b52a5d9f2425b637aa9340efd31791a3abc9" "39dd7106e6387e0c45dfce8ed44351078f6acd29a345d8b22e7b8e54ac25bac4" "48d9bc7ab7f35488dc3e6376ae19eea20223bafeda2b662c4c519c328423a8d2" "8e13d909a2a7aba5d4b77511d3920733f5d45d5463ddc233e7aa77a95f4dfa6d" "39fe48be738ea23b0295cdf17c99054bb439a7d830248d7e6493c2110bfed6f8" "9fcac3986e3550baac55dc6175195a4c7537e8aa082043dcbe3f93f548a3a1e0" "242527ce24b140d304381952aa7a081179a9848d734446d913ca8ef0af3cef21" "44247f2a14c661d96d2bff302f1dbf37ebe7616935e4682102b68c0b6cc80095" "31992d4488dba5b28ddb0c16914bf5726dc41588c2b1c1a2fd16516ea92c1d8e" "78559045fb299f3542c232166ad635c59cf0c6578d80a58b885deafe98a36c66" "a3fa4abaf08cc169b61dea8f6df1bbe4123ec1d2afeb01c17e11fdc31fc66379" "3a3de615f80a0e8706208f0a71bbcc7cc3816988f971b6d237223b6731f91605" "fa2b58bb98b62c3b8cf3b6f02f058ef7827a8e497125de0254f56e373abee088" "cc0dbb53a10215b696d391a90de635ba1699072745bf653b53774706999208e3" "3e335d794ed3030fefd0dbd7ff2d3555e29481fe4bbb0106ea11c660d6001767" "a2dd771a05705be2a6e6adb6ddbc7a27ebf49edab1dffdbefe243096becba7c9" "a25c42c5e2a6a7a3b0331cad124c83406a71bc7e099b60c31dc28a1ff84e8c04" "c259628fbeed876031537c380f3f2ebe084fe5107f5db63edd4fc1bbdab9cba7" default)))
  '(exec-path
    (quote
     ("/Users/cs/.cargo/bin" "/usr/local/bin" "/usr/bin" "/bin" "/usr/sbin" "/sbin" "/Library/TeX/texbin" "/Library/Frameworks/Mono.framework/Versions/Current/Commands" "/Applications/Wireshark.app/Contents/MacOS" "/Users/cs/Dev/emacs-mac/lib-src" "/Users/cs/.cabal/bin")))
