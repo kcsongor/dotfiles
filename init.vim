@@ -1,6 +1,6 @@
-"PLUGINS {{{1
+  "PLUGINS {{{1
 call plug#begin('~/.config/nvim/plugged')
-Plug '/usr/local/opt/fzf'
+Plug '~/.fzf'
 Plug 'Shougo/vimproc.vim'
 Plug 'airblade/vim-gitgutter'
 Plug 'benmills/vimux'
@@ -16,15 +16,15 @@ Plug 'junegunn/goyo.vim'
 Plug 'junegunn/gv.vim'
 Plug 'jvoorhis/coq.vim'
 Plug 'kcsongor/vim-colour-manager'
+Plug 'purescript-contrib/purescript-vim'
 Plug 'kcsongor/vim-hs'
 Plug 'kcsongor/vim-itunes'
 Plug 'kcsongor/vim-monochrome'
-Plug 'kcsongor/vim-notes'
+"Plug 'kcsongor/vim-notes'
 Plug 'kcsongor/vim-refactor'
 Plug 'kcsongor/vim-tabbar'
 Plug 'kcsongor/vim-thesis-writing'
 Plug 'lervag/vimtex'
-Plug 'majutsushi/tagbar'
 Plug 'mattn/gist-vim'
 Plug 'mattn/webapi-vim'
 Plug 'mbbill/undotree'
@@ -33,6 +33,10 @@ Plug 'tpope/vim-commentary'
 Plug 'tpope/vim-dispatch'
 Plug 'tpope/vim-fugitive'
 Plug 'tpope/vim-rhubarb'
+Plug 'ndmitchell/ghcid', { 'rtp': 'plugins/nvim' }
+Plug 'tpope/vim-vinegar'
+Plug 'tpope/vim-surround'
+
 call plug#end()
 "PRESENTATIONS {{{1
 
@@ -67,26 +71,65 @@ endfunction
 "COLOURS {{{1
 call colours#update_background()
 call colours#lazy_colorscheme('monochrome')
+colorscheme monochrome
+set background=dark
+
+" TEMP PRESENTATION STUFF {{{1
+
+
 "STATUS LINE {{{1
 function! init#status_new_file()
   if (filereadable(expand('%')))
     return ""
   else
-    return " [·] "
+    return " [NEW] "
   endif
 endfunction
 
+function! init#status_module_name()
+  if &filetype == "haskell"
+    return GetModuleName()
+  endif
+  return expand('%')
+endfunction
+
+function! init#status_project_name()
+  if &filetype == "haskell"
+    let prjName = GetProjectName()
+    if prjName != -1
+      return "[" . prjName . "]"
+    else
+      return "[-]"
+    endif
+  endif
+  return ""
+endfunction
+
+function! init#working_dir()
+  return systemlist('git rev-parse --show-toplevel 2>/dev/null || pwd')[0]
+endfunction
+
+function! init#project_path()
+  if &filetype == "haskell"
+    return GetProjectPath()
+  else
+    return init#working_dir()
+  endif
+endfunction
+
+let g:hardtime_default_on = 0
+
 set statusline =
-set statusline+=\ %n\ 
-set statusline+=%#Status1#
-set statusline+=\ %f:%l:%c\ \|
+set statusline+=%{init#status_project_name()}\ 
+"set statusline+=%<%#Status1#
+set statusline+=%{init#status_module_name()}
+set statusline+=\ 
 set statusline+=%#Status1#
 set statusline+=%=
 set statusline+=%{refactor#refactoring_mode()}
 set statusline+=%m
 set statusline+=%{init#status_new_file()}
 set statusline+=%#Status0#
-"set statusline+=\ %{fugitive#head()}\ %p%%\ 
 
 "GENERAL SETTINGS {{{1
 set exrc
@@ -161,7 +204,7 @@ augroup general
   autocmd!
   autocmd WinLeave     * if &rnu | let w:rnu=1 | set nornu | else | let w:rnu=0 | endif
   autocmd WinEnter     * silent! if w:rnu | set rnu | endif
-  autocmd BufWritePost * call notes#update_notes_after_write()
+  "autocmd BufWritePost * call notes#update_notes_after_write()
 augroup END
 
 augroup haskell
@@ -207,12 +250,33 @@ nnoremap <leader>grw  :silent! call refactor#find_all_tab(expand('<cword>'))<cr>
 " Jumps {{{2
 nnoremap <leader>]  :call fzf#vim#tags(expand('<cword>'), {'options': '--exact --select-1 --exit-0'})<cr>
 nnoremap <leader>ji :call Haskell_jump_to_imports()<cr>
-nnoremap <leader>jm :call fzf#vim#ag("^module " . expand('<cWORD>'), {'options': '-1 -0'})<cr>
+nnoremap <leader>jm :call FindHaskellModuleExact(expand('<cWORD>'))<cr>
+nmap     <leader>jt <Plug>Jump-tag
+
+function! FindHaskellModuleExact(module_name)
+  call fzf#vim#ag("^module " . a:module_name . "\( \|$\)", {'options': '-1 -0'})
+endfunction
+
+function! FindHaskellModule(dir, ...)
+  let pat = 0 < a:0 ? a:1 : inputdialog("Part of module name: ")
+  let pats = join(split(pat), ".*")
+  if (a:dir != -1)
+    call fzf#vim#ag("^module.*" . pats, {'options': '-1 -0', 'dir': a:dir})
+  else
+    call fzf#vim#ag("^module.*" . pats, {'options': '-1 -0'})
+  endif
+endfunction
+
+function! FindWordInDir(dir, word)
+  call fzf#vim#ag_raw(a:word . ' -w', {'dir': a:dir})
+endfunction
+
+vnoremap <leader>f "oy   :Ag! <C-R>o<cr>
 
 " Note-taking {{{2
-nnoremap <silent> = :call notes#jump_note()<cr>
-nnoremap <silent> + :call notes#add_lines_to_notes()<cr>
-vnoremap <silent> + :call notes#add_lines_to_notes()<cr>
+"nnoremap <silent> = :call notes#jump_note()<cr>
+"nnoremap <silent> + :call notes#add_lines_to_notes()<cr>
+"vnoremap <silent> + :call notes#add_lines_to_notes()<cr>
 
 " Terminal {{{2
 if (has('nvim'))
@@ -223,6 +287,7 @@ endif
 
 nnoremap <C-w>-     :TermSplitH<cr>
 nnoremap <C-w><Bar> :TermSplitV<cr>
+nnoremap <C-w><C-k> :bd<cr>
 
 nnoremap <C-h>  :tabprev<cr>
 nnoremap <C-l>  :tabnext<cr>
@@ -241,10 +306,21 @@ nnoremap <leader>ll :tabn<cr>
 nnoremap <leader>hh :tabp<cr>
 
 " Finding things {{{2
-nnoremap <C-p>           :Files<cr>
 nnoremap <leader>F       :Ag! <C-R>o<cr>
 nnoremap <leader>a       :Ag!<cr>
 vnoremap <leader>f "oy   :Ag! <C-R>o<cr>
+nnoremap <leader>f       :Ag! <C-R><C-W><cr>
+
+nnoremap <C-p> <nop>
+nnoremap <C-f> <nop>
+
+nnoremap <C-f><C-f>      :Files<cr>
+nnoremap <C-f><C-n>      :FZFNeigh<cr>
+nnoremap <C-f><C-g>      :GFiles?<cr>
+nnoremap <C-f><C-m>      :call FindHaskellModule(-1)<cr>
+nnoremap <C-p><C-f><C-f> :exe ':Files' . init#project_path()<cr>
+nnoremap <C-P><C-f><C-m> :call FindHaskellModule(init#project_path())<cr>
+nnoremap <C-P><C-w>      :call FindWordInDir(init#project_path(), '<C-R><C-W>')<cr>
 
 " Formatting {{{2
 nnoremap <leader>t     :Tabularize/
@@ -260,7 +336,6 @@ nnoremap <leader><Tab> :Buffers<cr>
 nnoremap <leader>bl    :BLines<cr>
 nnoremap <leader>cd    :cd %:h<cr>
 nnoremap <leader>lcd   :lcd %:h<cr>
-nnoremap <leader>f     :Ag! <C-R><C-W><cr>
 nnoremap <leader>ne    :FZFNeigh<cr>
 nnoremap <leader>p     :GFiles<cr>
 
@@ -281,6 +356,8 @@ nnoremap <expr> gb       '`[' . strpart(getregtype(), 0, 1) . '`]'
 nnoremap <leader>ic      :echo CurrentTrack()<cr>
 nnoremap <leader>R       :VimuxRunLastCommand<cr>
 vnoremap t               :call init#termbin()<cr>
+nnoremap <Down>          zjztzx
+nnoremap <Up>            zkztzx
 
 " vimrc {{{2
 nnoremap <leader>ev :e `=resolve(expand($MYVIMRC))`<CR>
@@ -291,15 +368,15 @@ nnoremap <expr> <C-j> &diff ? ']c' : ':lnext<cr>'
 nnoremap <expr> <C-k> &diff ? '[c' : ':lprev<cr>'
 
 nnoremap <expr> <C-a> &diff ? ':GitGutterStageHunk<cr>' : '<C-a>'
-
+" Haskell {{{2
 function! init#haskell_mappings()
-  nnoremap <buffer> --h "=HaskellModuleHeader()<CR>:0put =<cr>
+  nnoremap <buffer> <leader>hh "=HaskellModuleHeader()<CR>:0put =<cr>
   nnoremap <buffer> <C-c><C-c>   :Hoogle <C-R><C-W><cr>
   nmap     <buffer> <leader>ec   <Plug>Edit-cabal-file
   nnoremap <buffer> <leader>eh   :Config haskell<CR>
   nmap     <buffer> <leader>ey   <Plug>Edit-stack.yaml
   nnoremap <buffer> <leader>ho   :call Hoogle()<cr>
-  nnoremap <buffer> <leader>ia   :call Haskell_import_module()<cr>
+  nnoremap <buffer> <leader>ia   :silent :call Haskell_import_module()<cr>
   nmap     <buffer> <leader>ii   <Plug>:i-cword
   nmap     <buffer> <leader>ik   <Plug>:k-cword
   nnoremap <buffer> <leader>ioa  :call AddOptionGHCI()<cr>
@@ -307,19 +384,19 @@ function! init#haskell_mappings()
   nmap     <buffer> <leader>it   <Plug>:t-cword
   nnoremap <buffer> <leader>la   :call Haskell_add_language_pragma()<cr>
   nnoremap <buffer> <leader>lf   :w<cr> :call LoadGhci()<cr>
-  nnoremap <buffer> <leader>mi   :call <SID>insert_module_name()<cr>
+  nmap     <buffer> <leader>mi   <Plug>Insert-module-name
   nnoremap <buffer> <leader>oa   :call Haskell_add_compiler_flag()<cr>
   nnoremap <buffer> <leader>r    :call ReloadGHCI()<cr>
   nmap     <buffer> <leader>sb   <Plug>Open-REPL
   nmap     <buffer> <leader>sc   <Plug>View-core
-  nnoremap <buffer> <leader>si   :Tabularize/as<CR>vip:sort<CR>`z
-  nnoremap <buffer> <leader>sl   :Tabularize/#-}<CR>vip:!sort\|uniq<CR>`z
+  nnoremap <buffer> <leader>si   :Tabularize/as<CR>vip:sort<CR>
+  nnoremap <buffer> <leader>sl   mzgg:Tabularize/#-}<CR>vip:!sort\|uniq<CR>`z
   nmap     <buffer> <leader>tt   <Plug>Type-under-cursor
   nmap     <buffer> <leader>wm   <Plug>Identifier-information
 
   " Working on GHC
   nmap     <buffer> <leader>jN <Plug>Find-note-under-cursor
-  nmap     <buffer> <leader>jn <Plug>Find-notes
+  "nmap     <buffer> <leader>jn <Plug>Find-notes
 endfunction
 
 function! init#lhaskell_mappings()
@@ -329,6 +406,7 @@ function! init#lhaskell_mappings()
   nnoremap <buffer> <leader>js :JumpToLabels section<cr>
 endfunction
 
+" Search {{{2
 map / <Plug>(incsearch-forward)
 map ? <Plug>(incsearch-backward)
 map g/ <Plug>(incsearch-stay)
@@ -352,12 +430,12 @@ vnoremap <leader>( <esc>a)<esc>gvo<esc>i(<esc>%
 vnoremap <leader>[ <esc>a]<esc>gvo<esc>i[<esc>%
 vnoremap <leader>{ <esc>a}<esc>gvo<esc>i{<esc>%
 
-nmap <leader>( <Plug>Surround-word-with-(
-nnoremap <Plug>Surround-word-with-( mzdiwi(<esc>pa)<esc>`zl
-nmap <leader>[ <Plug>Surround-word-with-[
-nnoremap <Plug>Surround-word-with-[ mzdiwi[<esc>pa]<esc>`zl
-nmap <leader>{ <Plug>Surround-word-with-{
-nnoremap <Plug>Surround-word-with-{ mzdiwi{<esc>pa}<esc>`zl
+nmap <leader>( ysiw(
+nmap <leader>[ ysiw[
+nmap <leader>{ ysiw{
+nmap <leader>) ysiw)
+nmap <leader>] ysiw]
+nmap <leader>} ysiw}
 " Show highlight group {{{3
 nnoremap <leader>hg :echo "hi<" . synIDattr(synID(line("."),col("."),1),"name") . '> trans<'
 \ . synIDattr(synID(line("."),col("."),0),"name") . "> lo<"
@@ -525,6 +603,8 @@ command! -nargs=0 MarkErrorLines
 command! -nargs=0 ClearErrors
   \ call init#clear_errors()
 
+command! -nargs=1 Ltag silent ltag <args> | execute "normal \<C-o>" | tab lopen
+
 "ERRORS {{{1
 
 function! init#clear_errors()
@@ -570,38 +650,6 @@ let g:AutoPairsFlyMode = 0
 let g:goyo_width="120"
 let g:goyo_height="100%"
 let g:goyo_linenr=1
-
-let g:tagbar_type_haskell = {
-    \ 'ctagsbin'  : 'hasktags',
-    \ 'ctagsargs' : '-x -c -o-',
-    \ 'kinds'     : [
-        \  'm:modules:0:1',
-        \  'd:data: 0:1',
-        \  'd_gadt: data gadt:0:1',
-        \  't:type names:0:1',
-        \  'nt:new types:0:1',
-        \  'c:classes:0:1',
-        \  'cons:constructors:1:1',
-        \  'c_gadt:constructor gadt:1:1',
-        \  'c_a:constructor accessors:1:1',
-        \  'ft:function types:1:1',
-        \  'fi:function implementations:0:1',
-        \  'o:others:0:1'
-    \ ],
-    \ 'sro'        : '.',
-    \ 'kind2scope' : {
-        \ 'm' : 'module',
-        \ 'c' : 'class',
-        \ 'd' : 'data',
-        \ 't' : 'type'
-    \ },
-    \ 'scope2kind' : {
-        \ 'module' : 'm',
-        \ 'class'  : 'c',
-        \ 'data'   : 'd',
-        \ 'type'   : 't'
-    \ }
-\ }
 
 let g:undotree_WindowLayout = 3
 
