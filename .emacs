@@ -8,6 +8,7 @@
              '("emacs-pe" . "https://emacs-pe.github.io/packages/"))
 
 (package-initialize)
+(fringe-mode 4)
 
 ;;-------------------------------------------------------------------------------- 
 ;; General
@@ -21,45 +22,82 @@
 (setq ring-bell-function 'ignore)
 (when window-system (scroll-bar-mode -1))
 (global-prettify-symbols-mode t)
-(paredit-mode 1)
+; (paredit-mode 1)
 (setq ediff-split-window-function 'split-window-horizontally)
 
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(default ((((class color) (min-colors 89)) (:family "Iosevka" :weight normal :height 120))))
- '(org-block ((t (:family "Iosevka"))))
- '(org-level-1 ((t (:family "Iosevka" :height 1.6))))
- '(org-level-2 ((t (:family "Iosevka" :height 1.3))))
- '(org-level-3 ((t (:family "Iosevka" :height 1.2))))
- '(org-level-4 ((t (:family "Iosevka" :height 1.1))))
- '(org-meta-line ((t (:family "Iosevka" :height 1))))
- '(org-table ((t (:family "Iosevka" :height 1))))
- '(org-tag ((t (:family "Iosevka" :height 0.6))))
- '(org-todo ((t (:family "Iosevka" :height 1))))
- '(shm-current-face ((t (:background "#f0f0f0"))))
- '(shm-quarantine-face ((t (:background "#a0a0a0")))))
-
-
-(setq org-startup-indented t
-      org-bullets-bullet-list '(" ") ;; no bullets, needs org-bullets package
-      org-ellipsis " ↴ " ;; folding symbol
-      org-pretty-entities t
-      ;; org-hide-emphasis-markers
-      ;; show actually italicized text instead of /italicized text/
-      org-agenda-block-separator ""
-      org-fontify-whole-heading-line t
-      org-fontify-done-headline t
-      org-fontify-quote-and-verse-blocks t)
+(add-hook 'org-mode-hook
+	  (lambda ()
+	    (progn (org-bullets-mode 1)
+		   (setq line-spacing 0.25))))
 
 ;;-------------------------------------------------------------------------------- 
-;; Packages
-(add-to-list 'load-path "~/.emacs.d/lisp/")
-(add-to-list 'load-path "~/Dev/haskell/structured-haskell-mode/elisp/")
-(require 'shm)
-;; (require 'ott-mode)
+
+(use-package projectile
+  :ensure t)
+
+(use-package helm-projectile
+  :ensure t)
+
+(use-package org
+  :ensure t
+  :bind ("C-c c" . 'org-store-link)
+  :bind ("C-c a" . 'org-agenda)
+  :bind ("C-c c" . 'org-capture)
+  :bind ("C-c b" . 'org-switchb)
+  :config
+  (setq org-startup-indented t
+	;;org-bullets-bullet-list '(" ") ;; no bullets, needs org-bullets package
+	org-ellipsis " ▼ " ;; folding symbol
+	org-pretty-entities t
+	org-hide-emphasis-markers t
+	;; show actually italicized text instead of /italicized text/
+	org-agenda-block-separator ""
+	org-fontify-whole-heading-line t
+	org-fontify-done-headline t
+	org-fontify-quote-and-verse-blocks t))
+
+(use-package org-projectile
+  :ensure t)
+
+(use-package calfw
+  :ensure t
+  :config
+  (setq cfw:fchar-junction ?╋
+	cfw:fchar-vertical-line ?┃
+	cfw:fchar-horizontal-line ?━
+	cfw:fchar-left-junction ?┣
+	cfw:fchar-right-junction ?┫
+	cfw:fchar-top-junction ?┯
+	cfw:fchar-top-left-corner ?┏
+	cfw:fchar-top-right-corner ?┓)
+  (setq cfw:org-overwrite-default-keybinding t
+	calendar-week-start-day 1))
+
+(use-package calfw-org
+  :ensure t)
+
+(defun open-calendar ()
+  (interactive)
+  (cfw:open-calendar-buffer
+   :contents-sources
+   (list
+    (cfw:org-create-source "#ffffff")  ; orgmode source
+    ;; (cfw:howm-create-source "Blue")  ; howm source
+    ;; (cfw:cal-create-source "Orange") ; diary source
+    ;; (cfw:ical-create-source "Moon" "~/moon.ics" "Gray")  ; ICS source1
+    ;; (cfw:ical-create-source "gcal" "https://..../basic.ics" "IndianRed") ; google calendar ICS
+   )))
+
+(org-babel-do-load-languages 'org-babel-load-languages
+    '(
+        (shell . t)
+    )
+)
+
+(use-package org-bullets
+  :ensure t
+  :config
+  (setq org-bullets-bullet-list '("○")))
 
 (use-package evil
   :ensure t
@@ -70,15 +108,44 @@
   (evil-leader-mode t)
   (setq evil-leader/leader "<SPC>")
   (global-evil-leader-mode 1)
-  (define-key evil-emacs-state-map [escape] 'evil-normal-state)
-  (setq evil-emacs-state-modes nil)
+  (define-key evil-emacs-state-map [escape] nil)
+  (setq evil-emacs-state-modes '(magit-mode help-mode magit-popup-mode org-agenda-mode))
   (setq evil-motion-state-modes nil)
   (evil-paredit-mode 1))
 
-(use-package magit
+(use-package evil-leader
+  :ensure t
+  :config
+  (evil-leader/set-key
+  "ee"	'eval-last-sexp
+  "ev"	'open-dotemacs
+  "p"	'helm-ls-git-ls
+  "f"	'helm-do-grep-ag
+  "aa"	'align-regexp
+  "TAB" 'helm-buffers-list
+  "SPC" 'helm-projectile
+  ;; Git
+  "gs"  'magit-status
+  "gp"  'magit-pull
+  "gu"  'magit-push-popup
+  "gc"  'magit-commit
+  "gb"  'magit-blame
+  "gd"  'magit-diff-buffer-file
+  "ga"  'magit-stage
+  "ghp" 'diff-hl-diff-goto-hunk
+  "ghu" 'diff-hl-revert-hunk
+  ;; Org
+  "op"  'org-latex-export-to-pdf
+  ;; Toggles
+  "tr"	'linum-relative-mode
+  "tn"	'linum-mode
+  "l,"	'eyebrowse-rename-window-config
+  ))
+
+(use-package evil-paredit
   :ensure t)
 
-(use-package evil-magit
+(use-package magit
   :ensure t)
 
 (use-package shackle
@@ -113,13 +180,23 @@
   (setq helm-buffer-max-length 40)
   (setq helm-display-function 'pop-to-buffer) ; make helm play nice
   (define-key helm-map (kbd "S-SPC") 'helm-toggle-visible-mark)
-  (define-key helm-find-files-map (kbd "C-h") 'helm-find-files-up-one-level)
-  (define-key helm-find-files-map (kbd "C-k") 'helm-previous-line)
-  (define-key helm-find-files-map (kbd "C-l") 'helm-execute-persistent-action)
-  (define-key helm-map (kbd "C-l") 'helm-execute-persistent-action)
-  (define-key helm-map (kbd "C-j") 'helm-next-line)
-  (define-key helm-map (kbd "C-k") 'helm-previous-line)
   )
+
+;; Clear eshell buffer (just like in normal shell)
+(defun eshell-clear (&optional arg)
+  (interactive "p")
+  (let ((eshell-buffer-maximum-lines 0))
+    (eshell-truncate-buffer)))
+
+(defun eshell/vim (file)
+  (find-file-other-window file))
+
+(add-hook 'eshell-mode-hook
+          '(lambda () (progn
+		   (define-key eshell-mode-map (kbd "C-l") 'eshell-clear)
+		   (define-key eshell-mode-map (kbd "C-r") 'helm-eshell-history) ;; doesn't work
+		   (add-to-list 'eshell-visual-commands "fzf")
+		   )))
 
 (use-package pdf-tools
     :ensure t
@@ -139,16 +216,6 @@
     (evil-define-key 'normal pdf-view-mode-map (kbd "-") 'pdf-view-shrink)
     (use-package org-pdfview
       :ensure t))
-
-;; (use-package sexy-monochrome-theme
-;;   :ensure t
-;;   :config
-;;   (load-theme 'sexy-monochrome t))
-
-(use-package minimal-theme
-  :ensure t
-  :config
-  (load-theme 'minimal-light t))
 
 (use-package diff-hl
   :ensure t
@@ -191,55 +258,24 @@
 (defmacro vmap (key binding)
   `(emap "visual" ,key ,binding))
 
-(map  "M-n" 'org-capture)
+;(map  "M-n" 'org-capture)
 ;(nmap "C-a" 'evil-numbers/inc-at-pt)
 ;(nmap "C-X" 'evil-numbers/dec-at-pt)
 ;(nmap "C-u" 'evil-scroll-page-up)
 (nmap "C-k" 'previous-match)
 (nmap "C-j" 'next-match)
-(nmap "C-p" 'helm-find-files)
+(nmap "C-x C-f" 'helm-find-files)
 (nmap "A-f" 'helm-recentf)
 (imap "C-g" 'evil-normal-state)
-
-(evil-leader/set-key
-  "ee"	'eval-last-sexp
-  "ev"	'open-dotemacs
-  "p"	'helm-ls-git-ls
-  "f"	'helm-do-grep-ag
-  "aa"	'align-regexp
-  "TAB" 'helm-buffers-list
-  "SPC" 'helm-projectile
-  ;; Git
-  "gs"  'magit-status
-  "gp"  'magit-pull
-  "gu"  'magit-push-popup
-  "gc"  'magit-commit
-  "gb"  'magit-blame
-  "gd"  'magit-diff-buffer-file
-  "ga"  'magit-stage
-  "ghp" 'diff-hl-diff-goto-hunk
-  "ghu" 'diff-hl-revert-hunk
-  ;; Org
-  "op"  'org-latex-export-to-pdf
-  ;; Toggles
-  "tr"	'linum-relative-mode
-  "tn"	'linum-mode
-  "l,"	'eyebrowse-rename-window-config
-  )
-
-;; Eyebrowse map 0-9
-(defmacro eyebrowse-mappings (numbers)
-  `(mapcar
-    (lambda (x) `(,(format "l%d" x)
-	     ',(intern (format "eyebrowse-switch-to-window-config-%d" x))))
-    ,numbers))
-(eval `(evil-leader/set-key ,@(apply #'append (eyebrowse-mappings (number-sequence 0 9)))))
 
 (defun open-dotemacs (&optional arg)
   (interactive "p") (find-file "~/.emacs"))
 
 ;;-------------------------------------------------------------------------------- 
 ;; Haskell stuff
+
+(use-package haskell-mode
+  :ensure t)
 
 ;; Haskell keybindings
 (add-hook 'haskell-mode-hook
@@ -250,26 +286,26 @@
 ;;-------------------------------------------------------------------------------- 
 ;; Coq stuff
 
-(require 'proof-site "~/.emacs.d/lisp/PG/generic/proof-site")
-(add-hook 'coq-mode-hook
-          (lambda ()
-            (company-coq-mode)
-            (evil-define-key 'normal coq-mode-map (kbd "<down>") 'proof-assert-next-command-interactive)
-            (evil-define-key 'normal coq-mode-map (kbd "<up>") 'proof-undo-last-successful-command)
-            (evil-define-key 'normal coq-mode-map (kbd "<return>") 'company-coq-proof-goto-point)
-            (abbrev-mode 0)
-	    (setq proof-three-window-mode-policy 'hybrid)
-	    (setq proof-follow-mode 'ignore)
-	    (setq proof-splash-enable nil)
-	    (defface proof-locked-face
-	    (proof-face-specs
-	    ;; This colour is quite subjective and may be best chosen according
-	    ;; to the type of display you have.
-	    (:background "#eaf8ff")
-	    (:background "#222288")
-	    (:underline t))
-	    "*Face for locked region of proof script (processed commands)."
-	    :group 'proof-faces)))
+;;(require 'proof-site "~/.emacs.d/lisp/PG/generic/proof-site")
+;;(add-hook 'coq-mode-hook
+;;          (lambda ()
+;;            (company-coq-mode)
+;;            (evil-define-key 'normal coq-mode-map (kbd "<down>") 'proof-assert-next-command-interactive)
+;;            (evil-define-key 'normal coq-mode-map (kbd "<up>") 'proof-undo-last-successful-command)
+;;            (evil-define-key 'normal coq-mode-map (kbd "<return>") 'company-coq-proof-goto-point)
+;;            (abbrev-mode 0)
+;;	    (setq proof-three-window-mode-policy 'hybrid)
+;;	    (setq proof-follow-mode 'ignore)
+;;	    (setq proof-splash-enable nil)
+;;	    (defface proof-locked-face
+;;	    (proof-face-specs
+;;	    ;; This colour is quite subjective and may be best chosen according
+;;	    ;; to the type of display you have.
+;;	    (:background "#eaf8ff")
+;;	    (:background "#222288")
+;;	    (:underline t))
+;;	    "*Face for locked region of proof script (processed commands)."
+;;	    :group 'proof-faces)))
 
 ;; (setq TeX-auto-save t)
 ;; (setq TeX-pare-self t)
@@ -359,42 +395,28 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(ansi-color-names-vector ["#000000" "light gray" "dark gray" "light slate gray"])
- '(custom-safe-themes
-   (quote
-    ("ee2f8a2d786f1ce5f7633b370a8ae05950306d673beed5d1bd04d0164b5e4e62" "93d0850a38ed83b05995f29c003dbb63fec3e9c5e4670118f7b91576bd7e0494" "8fbfefa40f91e72fde490db47740b52a5d9f2425b637aa9340efd31791a3abc9" "39dd7106e6387e0c45dfce8ed44351078f6acd29a345d8b22e7b8e54ac25bac4" "48d9bc7ab7f35488dc3e6376ae19eea20223bafeda2b662c4c519c328423a8d2" "8e13d909a2a7aba5d4b77511d3920733f5d45d5463ddc233e7aa77a95f4dfa6d" "39fe48be738ea23b0295cdf17c99054bb439a7d830248d7e6493c2110bfed6f8" "9fcac3986e3550baac55dc6175195a4c7537e8aa082043dcbe3f93f548a3a1e0" "242527ce24b140d304381952aa7a081179a9848d734446d913ca8ef0af3cef21" "44247f2a14c661d96d2bff302f1dbf37ebe7616935e4682102b68c0b6cc80095" "31992d4488dba5b28ddb0c16914bf5726dc41588c2b1c1a2fd16516ea92c1d8e" "78559045fb299f3542c232166ad635c59cf0c6578d80a58b885deafe98a36c66" "a3fa4abaf08cc169b61dea8f6df1bbe4123ec1d2afeb01c17e11fdc31fc66379" "3a3de615f80a0e8706208f0a71bbcc7cc3816988f971b6d237223b6731f91605" "fa2b58bb98b62c3b8cf3b6f02f058ef7827a8e497125de0254f56e373abee088" "cc0dbb53a10215b696d391a90de635ba1699072745bf653b53774706999208e3" "3e335d794ed3030fefd0dbd7ff2d3555e29481fe4bbb0106ea11c660d6001767" "a2dd771a05705be2a6e6adb6ddbc7a27ebf49edab1dffdbefe243096becba7c9" "a25c42c5e2a6a7a3b0331cad124c83406a71bc7e099b60c31dc28a1ff84e8c04" "c259628fbeed876031537c380f3f2ebe084fe5107f5db63edd4fc1bbdab9cba7" default)))
+ '(diff-hl-draw-borders nil)
+ '(diff-hl-side (quote left))
  '(exec-path
    (quote
     ("/Users/cs/.cargo/bin" "/usr/local/bin" "/usr/bin" "/bin" "/usr/sbin" "/sbin" "/Library/TeX/texbin" "/Library/Frameworks/Mono.framework/Versions/Current/Commands" "/Applications/Wireshark.app/Contents/MacOS" "/Users/cs/Dev/emacs-mac/lib-src" "/Users/cs/.cabal/bin")))
- '(eyebrowse-mode t)
- '(fci-rule-color "#858FA5" t)
- '(haskell-process-type (quote cabal-new-repl))
  '(jdee-db-active-breakpoint-face-colors (cons "#100e23" "#906cff"))
  '(jdee-db-requested-breakpoint-face-colors (cons "#100e23" "#95ffa4"))
  '(jdee-db-spec-breakpoint-face-colors (cons "#100e23" "#565575"))
+ '(org-agenda-files
+   (quote
+    ("~/.notes" "~/Temporary/misc.org" "~/Temporary/bills.org" "~/PhD/notes.org")))
+ '(org-babel-load-languages (quote ((shell . t) (haskell . t))))
+ '(org-capture-templates nil)
  '(org-catch-invisible-edits (quote show-and-error))
  '(org-entities-user (quote (("mathbb" "mathbb" nil "" "*" "" ""))))
+ '(org-icalendar-include-todo t)
  '(package-selected-packages
    (quote
-    (helm-itunes epresent monochrome-theme window-purpose shackle helm-projectile fzf exec-path-from-shell writeroom-mode reveal-in-osx-finder ag ivy org-ref minimal-theme org-bullets which-key vimrc-mode vdiff-magit use-package stack-mode slack scribble-mode projectile paredit-everywhere org-pdfview markdown-mode linum-relative interleave helm-ls-git helm-ghc eyebrowse evil-tabs evil-surround evil-paredit evil-org evil-numbers evil-magit evil-leader evil-indent-plus evil-expat evil-cleverparens diff-hl company-ghc company-coq boogie-friends auctex 0blayout)))
+    (org-projectile helm-ag fill-column-indicator calfw calfw-org sexy-monochrome-theme evil-paredit-mode helm-itunes epresent monochrome-theme window-purpose shackle helm-projectile fzf exec-path-from-shell writeroom-mode reveal-in-osx-finder ag ivy org-ref minimal-theme org-bullets which-key vimrc-mode vdiff-magit use-package stack-mode slack scribble-mode projectile paredit-everywhere org-pdfview markdown-mode linum-relative interleave helm-ls-git helm-ghc eyebrowse evil-tabs evil-surround evil-paredit evil-org evil-numbers evil-magit evil-leader evil-indent-plus evil-expat evil-cleverparens diff-hl company-ghc company-coq boogie-friends auctex 0blayout)))
  '(pdf-view-midnight-colors (quote ("#eeeeee" . "#000000")))
  '(projectile-mode t nil (projectile))
- '(proof-toolbar-enable t)
- '(vc-annotate-background "#ffffff")
- '(vc-annotate-color-map
-   (quote
-    ((20 . "#ab4642")
-     (50 . "#dc9656")
-     (80 . "#f7ca88")
-     (110 . "#a1b56c")
-     (140 . "#86c1b9")
-     (170 . "#7cafc2")
-     (200 . "#ab4642")
-     (230 . "#a16046")
-     (260 . "#181818")
-     (290 . "#282828")
-     (320 . "#383838")
-     (350 . "#585858"))))
- '(vc-annotate-very-old-color "#585858"))
+ '(proof-toolbar-enable t))
 
 ;; Org mode latex stuff
 (add-to-list 'org-entities-user
@@ -425,4 +447,241 @@
     (if face (message "Face: %s" face) (message "No face at %d" position))))
 (put 'narrow-to-region 'disabled nil)
 
-(setenv "PATH" (concat "/Users/cs/.local/bin:/Users/cs/.cabal/bin:" (getenv "PATH")))
+;; Theme
+(deftheme monochrome)
+(let ((class '((class color) (min-colors 89)))
+       (fg1 "#d4d4d4")
+       (fg2 "#c3c3c3")
+       (fg3 "#b2b2b2")
+       (fg4 "#a1a1a1")
+       (bg1 "#121212")
+       (bg2 "#141414")
+       (bg3 "#292929")
+       (bg4 "#3d3d3d")
+       (builtin "#d4d4d4")
+       (keyword "#d4d4d4")
+       (const   "#d4d4d4")
+       (comment "#808080")
+       (func    "#d4d4d4")
+       (str     "#00af87")
+       (type    "#d4d4d4")
+       (var     "#d4d4d4")
+       (warning "#fa8072")
+       (warning2 "#ff8800"))
+   (custom-theme-set-faces
+   'monochrome
+        `(default ((,class (:background ,bg1 :foreground ,fg1))))
+        `(font-lock-builtin-face ((,class (:foreground ,builtin))))
+        `(font-lock-comment-face ((,class (:foreground ,comment))))
+	`(font-lock-negation-char-face ((,class (:foreground ,const))))
+	`(font-lock-reference-face ((,class (:foreground ,const))))
+	`(font-lock-constant-face ((,class (:foreground ,const))))
+        `(font-lock-doc-face ((,class (:foreground ,comment))))
+        `(font-lock-function-name-face ((,class (:foreground ,func ))))
+        `(font-lock-keyword-face ((,class (:bold ,class :foreground ,keyword))))
+        `(font-lock-string-face ((,class (:foreground ,str))))
+        `(font-lock-type-face ((,class (:foreground ,type ))))
+        `(font-lock-variable-name-face ((,class (:foreground ,var))))
+        `(font-lock-warning-face ((,class (:foreground ,warning :background ,bg2))))
+        `(region ((,class (:background ,fg1 :foreground ,bg1))))
+        `(highlight ((,class (:foreground ,fg3 :background ,bg3))))
+	`(hl-line ((,class (:background  ,bg2))))
+	`(fringe ((,class (:background ,bg1 :foreground ,fg4))))
+	`(cursor ((,class (:background ,bg1))))
+        `(show-paren-match-face ((,class (:background ,warning))))
+        `(isearch ((,class (:bold t :foreground ,warning :background ,bg3))))
+        `(mode-line ((,class (:bold t :foreground ,fg4 :background ,bg4))))
+        `(mode-line-inactive ((,class (:foreground ,var :background ,bg2 :weight normal))))
+        `(mode-line-buffer-id ((,class (:bold t :foreground ,func :background nil))))
+	`(mode-line-highlight ((,class (:foreground ,keyword :box nil :weight bold))))
+        `(mode-line-emphasis ((,class (:foreground ,fg1))))
+	`(vertical-border ((,class (:foreground ,bg4))))
+        `(minibuffer-prompt ((,class (:bold t :foreground ,keyword))))
+        `(default-italic ((,class (:italic t))))
+	`(link ((,class (:foreground ,const :underline t))))
+	`(org-code ((,class (:foreground ,fg2))))
+	`(org-hide ((,class (:foreground ,fg4))))
+        `(org-level-1 ((,class (:bold t :foreground ,fg1))))
+        `(org-level-2 ((,class (:bold t :foreground ,fg1))))
+        `(org-level-3 ((,class (:bold t :foreground ,fg1))))
+        `(org-level-4 ((,class (:bold t :foreground ,fg1))))
+        `(org-headline-done ((,class (:bold nil :foreground ,fg2))))
+        `(org-date ((,class (:underline t :foreground ,var) )))
+        `(org-footnote  ((,class (:underline t :foreground ,fg4))))
+        `(org-link ((,class (:underline t :foreground ,type ))))
+        `(org-special-keyword ((,class (:foreground ,func))))
+        `(org-block ((,class (:foreground ,fg3))))
+        `(org-quote ((,class (:inherit org-block :slant italic))))
+        `(org-verse ((,class (:inherit org-block :slant italic))))
+        `(org-todo ((,class (:foreground ,warning :bold t))))
+        `(org-table ((,class (:foreground ,fg1 :bold nil))))
+        `(org-done ((,class (:bold t :foreground ,fg4))))
+        `(org-warning ((,class (:underline nil :foreground ,warning))))
+        `(org-agenda-structure ((,class (:weight bold :foreground ,fg3 :box (:color ,fg4) :background ,bg3))))
+        `(org-agenda-date ((,class (:foreground ,var))))
+        `(org-agenda-date-weekend ((,class (:weight normal :foreground ,fg4))))
+        `(org-agenda-date-today ((,class (:weight bold :foreground ,keyword :height 1.4))))
+        `(org-agenda-done ((,class (:foreground ,fg4))))
+	`(org-scheduled ((,class (:foreground ,type))))
+        `(org-scheduled-today ((,class (:foreground ,func :weight bold))))
+	`(org-ellipsis ((,class (:foreground ,builtin))))
+	`(org-verbatim ((,class (:foreground ,fg4))))
+        `(org-document-info-keyword ((,class (:foreground ,func))))
+	`(font-latex-bold-face ((,class (:foreground ,type))))
+	`(font-latex-italic-face ((,class (:foreground ,var :italic t))))
+	`(font-latex-string-face ((,class (:foreground ,str))))
+	`(font-latex-match-reference-keywords ((,class (:foreground ,const))))
+	`(font-latex-match-variable-keywords ((,class (:foreground ,var))))
+	`(ido-only-match ((,class (:foreground ,warning))))
+	`(org-sexp-date ((,class (:foreground ,fg4))))
+	`(ido-first-match ((,class (:foreground ,keyword :bold t))))
+	`(gnus-header-content ((,class (:foreground ,keyword))))
+	`(gnus-header-from ((,class (:foreground ,var))))
+	`(gnus-header-name ((,class (:foreground ,type))))
+	`(gnus-header-subject ((,class (:foreground ,func :bold t))))
+	`(mu4e-view-url-number-face ((,class (:foreground ,type))))
+	`(mu4e-cited-1-face ((,class (:foreground ,fg2))))
+	`(mu4e-cited-7-face ((,class (:foreground ,fg3))))
+	`(mu4e-header-marks-face ((,class (:foreground ,type))))
+	`(ffap ((,class (:foreground ,fg4))))
+	`(js2-private-function-call ((,class (:foreground ,const))))
+	`(js2-jsdoc-html-tag-delimiter ((,class (:foreground ,str))))
+	`(js2-jsdoc-html-tag-name ((,class (:foreground ,var))))
+	`(js2-external-variable ((,class (:foreground ,type  ))))
+        `(js2-function-param ((,class (:foreground ,const))))
+        `(js2-jsdoc-value ((,class (:foreground ,str))))
+        `(js2-private-member ((,class (:foreground ,fg3))))
+        `(js3-warning-face ((,class (:underline ,keyword))))
+        `(js3-error-face ((,class (:underline ,warning))))
+        `(js3-external-variable-face ((,class (:foreground ,var))))
+        `(js3-function-param-face ((,class (:foreground ,fg2))))
+        `(js3-jsdoc-tag-face ((,class (:foreground ,keyword))))
+        `(js3-instance-member-face ((,class (:foreground ,const))))
+	`(warning ((,class (:foreground ,warning)))) 
+	`(ac-completion-face ((,class (:underline t :foreground ,keyword))))
+	`(info-quoted-name ((,class (:foreground ,builtin))))
+	`(info-string ((,class (:foreground ,str))))
+	`(icompletep-determined ((,class :foreground ,builtin)))
+        `(undo-tree-visualizer-current-face ((,class :foreground ,builtin)))
+        `(undo-tree-visualizer-default-face ((,class :foreground ,fg2)))
+        `(undo-tree-visualizer-unmodified-face ((,class :foreground ,var)))
+        `(undo-tree-visualizer-register-face ((,class :foreground ,type)))
+	`(slime-repl-inputed-output-face ((,class (:foreground ,type))))
+        `(trailing-whitespace ((,class :foreground nil :background ,warning)))
+        `(rainbow-delimiters-depth-1-face ((,class :foreground ,fg1)))
+        `(rainbow-delimiters-depth-2-face ((,class :foreground ,type)))
+        `(rainbow-delimiters-depth-3-face ((,class :foreground ,var)))
+        `(rainbow-delimiters-depth-4-face ((,class :foreground ,const)))
+        `(rainbow-delimiters-depth-5-face ((,class :foreground ,keyword)))
+        `(rainbow-delimiters-depth-6-face ((,class :foreground ,fg1)))
+        `(rainbow-delimiters-depth-7-face ((,class :foreground ,type)))
+        `(rainbow-delimiters-depth-8-face ((,class :foreground ,var)))
+        `(magit-item-highlight ((,class :background ,bg3)))
+        `(magit-section-heading        ((,class (:foreground ,keyword :weight bold))))
+        `(magit-hunk-heading           ((,class (:background ,bg3))))
+        `(magit-section-highlight      ((,class (:background ,bg2))))
+        `(magit-hunk-heading-highlight ((,class (:background ,bg3))))
+        `(magit-diff-context-highlight ((,class (:background ,bg3 :foreground ,fg3))))
+        `(magit-diffstat-added   ((,class (:foreground ,type))))
+        `(magit-diffstat-removed ((,class (:foreground ,var))))
+        `(magit-process-ok ((,class (:foreground ,func :weight bold))))
+        `(magit-process-ng ((,class (:foreground ,warning :weight bold))))
+        `(magit-branch ((,class (:foreground ,const :weight bold))))
+        `(magit-log-author ((,class (:foreground ,fg3))))
+        `(magit-hash ((,class (:foreground ,fg2))))
+        `(magit-diff-file-header ((,class (:foreground ,fg2 :background ,bg3))))
+        `(lazy-highlight ((,class (:foreground ,fg2 :background ,bg3))))
+        `(term ((,class (:foreground ,fg1 :background ,bg1))))
+        `(term-color-monochrome ((,class (:foreground ,bg3 :background ,bg3))))
+        `(term-color-blue ((,class (:foreground ,func :background ,func))))
+        `(term-color-red ((,class (:foreground ,keyword :background ,bg3))))
+        `(term-color-green ((,class (:foreground ,type :background ,bg3))))
+        `(term-color-yellow ((,class (:foreground ,var :background ,var))))
+        `(term-color-magenta ((,class (:foreground ,builtin :background ,builtin))))
+        `(term-color-cyan ((,class (:foreground ,str :background ,str))))
+        `(term-color-white ((,class (:foreground ,fg2 :background ,fg2))))
+        `(rainbow-delimiters-unmatched-face ((,class :foreground ,warning)))
+        `(helm-header ((,class (:foreground ,fg2 :background ,bg1 :underline nil :box nil))))
+        `(helm-source-header ((,class (:foreground ,keyword :background ,bg1 :underline nil :weight bold))))
+        `(helm-selection ((,class (:background ,bg2 :underline nil))))
+        `(helm-selection-line ((,class (:background ,bg2))))
+        `(helm-visible-mark ((,class (:foreground ,bg1 :background ,bg3))))
+        `(helm-candidate-number ((,class (:foreground ,bg1 :background ,fg1))))
+        `(helm-separator ((,class (:foreground ,type :background ,bg1))))
+        `(helm-time-zone-current ((,class (:foreground ,builtin :background ,bg1))))
+        `(helm-time-zone-home ((,class (:foreground ,type :background ,bg1))))
+        `(helm-buffer-not-saved ((,class (:foreground ,type :background ,bg1))))
+        `(helm-buffer-process ((,class (:foreground ,builtin :background ,bg1))))
+        `(helm-buffer-saved-out ((,class (:foreground ,fg1 :background ,bg1))))
+        `(helm-buffer-size ((,class (:foreground ,fg1 :background ,bg1))))
+        `(helm-ff-directory ((,class (:foreground ,func :background ,bg1 :weight bold))))
+        `(helm-ff-file ((,class (:foreground ,fg1 :background ,bg1 :weight normal))))
+        `(helm-ff-executable ((,class (:foreground ,var :background ,bg1 :weight normal))))
+        `(helm-ff-invalid-symlink ((,class (:foreground ,warning2 :background ,bg1 :weight bold))))
+        `(helm-ff-symlink ((,class (:foreground ,keyword :background ,bg1 :weight bold))))
+        `(helm-ff-prefix ((,class (:foreground ,bg1 :background ,keyword :weight normal))))
+        `(helm-grep-cmd-line ((,class (:foreground ,fg1 :background ,bg1))))
+        `(helm-grep-file ((,class (:foreground ,fg1 :background ,bg1))))
+        `(helm-grep-finish ((,class (:foreground ,fg2 :background ,bg1))))
+        `(helm-grep-lineno ((,class (:foreground ,fg1 :background ,bg1))))
+        `(helm-grep-match ((,class (:foreground nil :background nil :inherit helm-match))))
+        `(helm-grep-running ((,class (:foreground ,func :background ,bg1))))
+        `(helm-moccur-buffer ((,class (:foreground ,func :background ,bg1))))
+        `(helm-source-go-package-godoc-description ((,class (:foreground ,str))))
+        `(helm-bookmark-w3m ((,class (:foreground ,type))))
+        `(company-echo-common ((,class (:foreground ,bg1 :background ,fg1))))
+        `(company-preview ((,class (:background ,bg1 :foreground ,var))))
+        `(company-preview-common ((,class (:foreground ,bg2 :foreground ,fg3))))
+        `(company-preview-search ((,class (:foreground ,type :background ,bg1))))
+        `(company-scrollbar-bg ((,class (:background ,bg3))))
+        `(company-scrollbar-fg ((,class (:foreground ,keyword))))
+        `(company-tooltip ((,class (:foreground ,fg2 :background ,bg1 :bold t))))
+        `(company-tooltop-annotation ((,class (:foreground ,const))))
+        `(company-tooltip-common ((,class ( :foreground ,fg3))))
+        `(company-tooltip-common-selection ((,class (:foreground ,str))))
+        `(company-tooltip-mouse ((,class (:inherit highlight))))
+        `(company-tooltip-selection ((,class (:background ,bg3 :foreground ,fg3))))
+        `(company-template-field ((,class (:inherit region))))
+        `(web-mode-builtin-face ((,class (:inherit ,font-lock-builtin-face))))
+        `(web-mode-comment-face ((,class (:inherit ,font-lock-comment-face))))
+        `(web-mode-constant-face ((,class (:inherit ,font-lock-constant-face))))
+        `(web-mode-keyword-face ((,class (:foreground ,keyword))))
+        `(web-mode-doctype-face ((,class (:inherit ,font-lock-comment-face))))
+        `(web-mode-function-name-face ((,class (:inherit ,font-lock-function-name-face))))
+        `(web-mode-string-face ((,class (:foreground ,str))))
+        `(web-mode-type-face ((,class (:inherit ,font-lock-type-face))))
+        `(web-mode-html-attr-name-face ((,class (:foreground ,func))))
+        `(web-mode-html-attr-value-face ((,class (:foreground ,keyword))))
+        `(web-mode-warning-face ((,class (:inherit ,font-lock-warning-face))))
+        `(web-mode-html-tag-face ((,class (:foreground ,builtin))))
+        `(jde-java-font-lock-package-face ((t (:foreground ,var))))
+        `(jde-java-font-lock-public-face ((t (:foreground ,keyword))))
+        `(jde-java-font-lock-private-face ((t (:foreground ,keyword))))
+        `(jde-java-font-lock-constant-face ((t (:foreground ,const))))
+        `(jde-java-font-lock-modifier-face ((t (:foreground ,fg2))))
+        `(jde-jave-font-lock-protected-face ((t (:foreground ,keyword))))
+        `(jde-java-font-lock-number-face ((t (:foreground ,var))))
+	`(cfw:face-day-title ((t nil)))
+	`(cfw:face-grid ((t (:foreground ,bg4))))
+	`(cfw:face-header ((t (:foreground ,fg1 :weight bold))))
+	`(cfw:face-select ((t (:background ,bg4))))
+	`(cfw:face-sunday ((t (:foreground ,fg1 :weight bold))))
+	`(cfw:face-title ((t (:inherit variable-pitch :foreground "white" :weight bold :height 2.0))))
+	`(cfw:face-today-title ((t (:background ,bg4 :weight bold))))
+	`(cfw:face-today ((t (:background ,bg4 :weight bold))))
+	`(cfw:face-toolbar ((t (:foreground "Steelblue4"))))
+	`(cfw:face-holiday ((t (:foreground "Steelblue4"))))
+	`(cfw:face-toolbar-button-off ((t (:foreground "white smoke" :weight bold))))
+        `(ediff-odd-diff-A ((,class (:background ,bg3))))
+        `(ediff-even-diff-A ((,class (:background ,bg3))))
+        `(ediff-odd-diff-B ((,class (:background ,bg3))))
+        `(ediff-even-diff-B ((,class (:background ,bg3))))
+        `(ediff-odd-diff-C ((,class (:background ,bg3))))
+        `(ediff-even-diff-C ((,class (:background ,bg3))))
+	`(custom-face-tag ((t (:inherit nil))))))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(default ((t (:inherit nil :stipple nil :background "#121212" :foreground "#d4d4d4" :inverse-video nil :box nil :strike-through nil :overline nil :underline nil :slant normal :weight normal :height 110 :width normal :foundry "nil" :family "Iosevka Term")))))
