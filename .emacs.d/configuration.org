@@ -563,7 +563,7 @@ Ivy-rich
     :ensure t
     :bind ("C-x g" . magit-status))
 #+END_SRC
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC
   (use-package magithub
     :ensure t
     :after magit

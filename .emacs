@@ -76,7 +76,7 @@
  '(org-icalendar-include-todo t)
  '(package-selected-packages
    (quote
-    (mmm-mode mmm tidal diminish ivy-hydra yasnippet-snippets ivy-rich rainbow-mode emamux ensime scala-mode magithub perspective counsel-projectile which-key org-protocol counsel swiper org-pdfview pdf-tools htmlize org-projectile fill-column-indicator calfw calfw-org evil-paredit-mode helm-itunes epresent monochrome-theme window-purpose shackle fzf exec-path-from-shell writeroom-mode reveal-in-osx-finder ag ivy org-ref minimal-theme org-bullets vimrc-mode vdiff-magit use-package stack-mode slack scribble-mode projectile paredit-everywhere markdown-mode linum-relative interleave helm-ls-git helm-ghc eyebrowse evil-tabs evil-surround evil-paredit evil-org evil-numbers evil-magit evil-leader evil-indent-plus evil-expat evil-cleverparens diff-hl company-ghc company-coq boogie-friends auctex 0blayout)))
+    (forge mmm-mode mmm tidal diminish ivy-hydra yasnippet-snippets ivy-rich rainbow-mode emamux ensime scala-mode perspective counsel-projectile which-key org-protocol counsel swiper org-pdfview pdf-tools htmlize org-projectile fill-column-indicator calfw calfw-org evil-paredit-mode helm-itunes epresent monochrome-theme window-purpose shackle fzf exec-path-from-shell writeroom-mode reveal-in-osx-finder ag ivy org-ref minimal-theme org-bullets vimrc-mode vdiff-magit use-package stack-mode slack scribble-mode projectile paredit-everywhere markdown-mode linum-relative interleave helm-ls-git helm-ghc eyebrowse evil-tabs evil-surround evil-paredit evil-org evil-numbers evil-magit evil-leader evil-indent-plus evil-expat evil-cleverparens diff-hl company-ghc company-coq boogie-friends auctex 0blayout)))
  '(pdf-view-midnight-colors (quote ("#eeeeee" . "#000000")))
  '(projectile-mode t nil (projectile))
  '(proof-toolbar-enable t)
@@ -90,4 +90,4 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((((class color) (min-colors 89)) (:background "white" :foreground "black")))))
+ )
