@@ -1,0 +1,724 @@
+* General
+** Mac
+Mac-specific settings. The option key should be the meta, and command
+be alt. This is because cmd is used for many other things in the
+system, and would therefore clash.
+#+BEGIN_SRC emacs-lisp
+(when (eq system-type 'darwin)
+  (setq mac-option-modifier 'meta)
+  (setq mac-command-modifier 'alt))
+#+END_SRC
+** Misc
+#+BEGIN_SRC emacs-lisp
+(tool-bar-mode 0)
+(desktop-save-mode 1)
+(menu-bar-mode 1) ;; This allows native full-screen on mac
+(setq ring-bell-function 'ignore)
+(when window-system (scroll-bar-mode -1))
+(global-prettify-symbols-mode t)
+; (paredit-mode 1)
+(setq ediff-split-window-function 'split-window-horizontally)
+(blink-cursor-mode 0)
+#+END_SRC
+** Scripts
+Clear eshell buffer (just like in normal shell)
+#+BEGIN_SRC emacs-lisp
+  (defun eshell-clear (&optional arg)
+    (interactive "p")
+    (let ((eshell-buffer-maximum-lines 0))
+      (eshell-truncate-buffer)))
+#+END_SRC
+
+Use the =vim= command in =eshell= to open files.
+
+#+BEGIN_SRC emacs-lisp
+  (defun eshell/vim (file)
+    (find-file-other-window file))
+#+END_SRC
+
+Use the =vimo= command to open in other buffer, but keep the =eshell=
+buffer selected.
+
+#+BEGIN_SRC emacs-lisp
+  (defun eshell/vimo (file)
+    (let ((window (get-buffer-window)))
+      (find-file-other-window file)
+      (recenter 0)
+      (select-window window)))
+#+END_SRC
+
+Eshell bindings.
+
+#+BEGIN_SRC emacs-lisp
+  (add-hook 'eshell-mode-hook
+            '(lambda () (progn
+                     (define-key eshell-mode-map (kbd "C-l") 'eshell-clear)
+                     (define-key eshell-mode-map (kbd "C-c C-l") 'counsel-esh-history)
+                     (add-to-list 'eshell-visual-commands "fzf")
+                     )))
+#+END_SRC
+
+Quickly open this file.
+
+#+BEGIN_SRC emacs-lisp
+  (defun open-dotemacs (&optional arg)
+    (interactive "p") (find-file "~/.emacs.d/configuration.org"))
+#+END_SRC
+
+Coq stuff (commented out)
+
+#+BEGIN_SRC emacs-lisp
+  ;;-------------------------------------------------------------------------------- 
+  ;; Coq stuff
+
+  ;;(require 'proof-site "~/.emacs.d/lisp/PG/generic/proof-site")
+  ;;(add-hook 'coq-mode-hook
+  ;;          (lambda ()
+  ;;            (company-coq-mode)
+  ;;            (evil-define-key 'normal coq-mode-map (kbd "<down>") 'proof-assert-next-command-interactive)
+  ;;            (evil-define-key 'normal coq-mode-map (kbd "<up>") 'proof-undo-last-successful-command)
+  ;;            (evil-define-key 'normal coq-mode-map (kbd "<return>") 'company-coq-proof-goto-point)
+  ;;            (abbrev-mode 0)
+  ;;	    (setq proof-three-window-mode-policy 'hybrid)
+  ;;	    (setq proof-follow-mode 'ignore)
+  ;;	    (setq proof-splash-enable nil)
+  ;;	    (defface proof-locked-face
+  ;;	    (proof-face-specs
+  ;;	    ;; This colour is quite subjective and may be best chosen according
+  ;;	    ;; to the type of display you have.
+  ;;	    (:background "#eaf8ff")
+  ;;	    (:background "#222288")
+  ;;	    (:underline t))
+  ;;	    "*Face for locked region of proof script (processed commands)."
+  ;;	    :group 'proof-faces)))
+
+  ;;;-------------------------------------------------------------------------------- 
+
+  ;; Org mode latex stuff
+  (add-to-list 'org-entities-user
+               '("leadsto" "\\leadsto{}" t "~>" "~>" "~>" "↝"))
+  (add-to-list 'org-entities-user
+               '("uapp" "\\mathop{\\texttt{@@}}" f "@@" "@@" "@@" "@"))
+  (add-to-list 'org-entities-user
+               '("Qcal" "\\mathcal{Q}" t "Q" "Q" "Q" "𝑄"))
+  (add-to-list 'org-entities-user
+               '("Dbb" "\\mathbb{D}" f "D" "D" "D" "𝔻"))
+  (add-to-list 'org-entities-user
+               '("Tbb" "\\mathbb{T}" f "T" "T" "T" "𝕋"))
+  (add-to-list 'org-entities-user
+               '("Fbb" "\\mathbb{F}" f "F" "F" "F" "𝔽"))
+  (add-to-list 'org-entities-user
+               '("vdash" "\\vdash{}" f "|-" "|-" "|-" "⊢"))
+  (add-to-list 'org-entities-user
+               '("Vdash" "\\Vdash{}" f "||-" "||-" "||-" "⊩"))
+  (add-to-list 'org-entities-user
+               '("mapsto" "\\mapsto{}" f "|->" "|->" "|->" "↦"))
+  (setq org-latex-caption-above nil)
+
+  (put 'narrow-to-region 'disabled nil)
+#+END_SRC
+
+Get font face under cursor.
+
+#+BEGIN_SRC emacs-lisp
+  (defun what-face (position)
+    "https://stackoverflow.com/questions/1242352/get-font-face-under-cursor-in-emacs/1242366#1242366"
+    (interactive "d")
+    (let ((face (or (get-char-property position 'read-face-name)
+                    (get-char-property position 'face))))
+      (if face (message "Face: %s" face) (message "No face at %d" position))))
+#+END_SRC
+
+** IRC
+#+BEGIN_SRC emacs-lisp
+  (setq erc-log-channels-directory "~/.erc/logs/")
+  (setq erc-save-buffer-on-part t)
+#+END_SRC
+* Theme
+#+BEGIN_SRC emacs-lisp
+(add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
+(defun transparency (value)
+   "Sets the transparency of the frame window. 0=transparent/100=opaque"
+   (interactive "nTransparency Value 0 - 100 opaque: ")
+   (set-frame-parameter (selected-frame) 'alpha value))
+(transparency 100)
+#+END_SRC
+
+Font
+#+BEGIN_SRC emacs-lisp
+(set-default-font "Iosevka Term")
+#+END_SRC
+* Packages
+** Projectile
+#+BEGIN_SRC emacs-lisp
+  (use-package projectile
+    :ensure t
+    :diminish)
+
+  ;;(evil-define-key 'normal 'global (kbd "C-p") 'project-find-file)
+  (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
+
+  (use-package counsel-projectile
+    :ensure t
+    :config
+    (counsel-projectile-mode 1)
+    (setq projectile-enable-caching t))
+#+END_SRC
+** Org
+#+BEGIN_SRC emacs-lisp
+  (use-package org
+    :ensure t
+    :bind ("C-c l" . 'org-store-link)
+    :bind ("C-c a" . 'org-agenda)
+    :bind ("C-c c" . 'org-capture)
+    :bind ("C-c b" . 'org-switchb)
+    :config
+    (setq org-startup-indented t
+          ;;org-bullets-bullet-list '(" ") ;; no bullets, needs org-bullets package
+          org-ellipsis " " ;; folding symbol
+          org-pretty-entities t
+          org-hide-emphasis-markers t
+          ;; show actually italicized text instead of /italicized text/
+          org-agenda-block-separator ""
+          org-fontify-whole-heading-line t
+          org-fontify-done-headline t
+          org-fontify-quote-and-verse-blocks t))
+
+  (setq org-agenda-files (quote ("~/org")))
+
+  (setq org-directory "~/org")
+  (setq org-default-notes-file "~/org/inbox.org")
+
+  (setq org-refile-targets (quote ((nil :maxlevel . 9)
+                                   (org-agenda-files :maxlevel . 9))))
+  (setq org-refile-use-outline-path nil)
+
+
+  (add-hook 'org-mode-hook
+            (lambda ()
+              (progn (org-bullets-mode 1)
+                     (setq line-spacing 0.25)
+                     (set-window-margins nil 3 3)
+                     (setq header-line-format " "))))
+
+  (use-package org-projectile
+    :ensure t
+    :bind (("C-c n p" . org-projectile-project-todo-completing-read))
+    :config
+    (progn
+      (setq org-projectile-projects-file
+            "~/org/projects.org")
+      (push (org-projectile-project-todo-entry) org-capture-templates)))
+
+  (org-babel-do-load-languages 'org-babel-load-languages
+      '((shell . t)))
+
+  (setq org-capture-templates
+        (quote (("t" "todo" entry (file+headline "~/org/inbox.org" "Tasks")
+                 "* TODO %?\n%U\n%a\n" :clock-keep t)
+                 ("p" "PhD")
+                 ("pr" "reading list" entry (file+headline "~/org/phd.org" "Reading list")
+                 "* START [[%x][%?]]\n%U\n" :clock-keep t)
+                 ("pt" "todo" entry (file+headline "~/org/phd.org" "Tasks")
+                 "* TODO %?\n%U\n%a\n" :clock-keep t)
+
+                 ("r" "respond" entry (file+headline "~/org/inbox.org" "Respond")
+                 "* NEXT Respond to %:from on %:subject\nSCHEDULED: %t\n%U\n%a\n" :clock-in t :clock-resume t)
+                ("j" "journal" entry (file+datetree "~/org/journal.org")
+                "* %?\n%U\n" :clock-in t :clock-resume t)
+                ("m" "meeting" entry (file+headline "~/org/inbox.org" "Meetings")
+                "* MEETING with %? :MEETING:\n%U" :clock-in t :clock-resume t))))
+
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(setq org-todo-keywords
+      (quote ((sequence "TODO(t)" "NEXT(n)" "|" "DONE(d)")
+              (sequence "START" "READING" "|" "READ")
+              (sequence "WAITING(w@/!)" "INACTIVE(i@/!)" "|" "CANCELLED(c@/!)" "PHONE" "MEETING" "TEACHING"))))
+
+(setq org-todo-keyword-faces
+      (quote (("TODO" :foreground "red" :weight bold)
+              ("NEXT" :foreground "steel blue" :weight bold)
+              ("COMPLETED" :foreground "forest green" :weight bold)
+              ("DONE" :foreground "forest green" :weight bold)
+              ("WAITING" :foreground "orange" :weight bold)
+              ("INACTIVE" :foreground "dim gray" :weight bold)
+              ("START" :foreground "indian red" :weight bold)
+              ("READING" :foreground "magenta" :weight bold)
+              ("CANCELLED" :foreground "forest green" :weight bold)
+              ("MEETING" :foreground "forest green" :weight bold)
+              ("TEACHING" :foreground "dark violet" :weight bold)
+              ("PHONE" :foreground "forest green" :weight bold))))
+
+(setq org-todo-state-tags-triggers
+      (quote (("READING" ("READING" . t))
+              ("INACTIVE" ("INACTIVE" . t))
+              ("HOLD" ("WAITING") ("HOLD" . t))
+              (done ("READING"))
+              ("TODO" ("WAITING") ("CANCELLED") ("HOLD"))
+              ("NEXT" ("WAITING") ("CANCELLED") ("HOLD"))
+              ("DONE" ("WAITING") ("CANCELLED") ("HOLD")))))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package org-bullets
+  :ensure t
+  :config
+  (setq org-bullets-bullet-list '("◌" "○" "○" "○" "○" "○" "○")))
+#+END_SRC
+
+Org statusbar hooks
+#+BEGIN_SRC emacs-lisp
+(add-hook 'org-clock-in-hook (lambda () (call-process "/usr/bin/osascript" nil 0 nil "-e" (concat "tell application \"org-clock-statusbar\" to clock in \"" (replace-regexp-in-string "\"" "\\\\\"" org-clock-current-task) "\""))))
+(add-hook 'org-clock-out-hook (lambda () (call-process "/usr/bin/osascript" nil 0 nil "-e" "tell application \"org-clock-statusbar\" to clock out")))
+#+END_SRC
+** Ag
+#+BEGIN_SRC emacs-lisp
+  (use-package ag
+    :ensure t)
+#+END_SRC
+** Haskell
+:PROPERTIES:
+:ATTACH_DIR_INHERIT: t
+:END:
+#+BEGIN_SRC emacs-lisp
+  (use-package haskell-mode
+    :ensure t)
+
+  ;; Haskell keybindings
+  (add-hook 'haskell-mode-hook
+            (lambda () (local-set-key (kbd "<f8>") 'haskell-navigate-imports)))
+
+  (add-hook 'haskell-mode-hook 'haskell-auto-insert-module-template)
+  (add-hook 'haskell-mode-hook 'haskell-decl-scan-mode)
+
+  (setq haskell-process-args-ghci
+        '("-ferror-spans" "-fshow-loaded-modules"))
+
+  (setq haskell-process-args-cabal-repl
+        '("--ghc-options=-ferror-spans -fshow-loaded-modules"))
+
+  (setq haskell-process-args-stack-ghci
+        '("--ghci-options=-ferror-spans -fshow-loaded-modules"
+          "--no-build" "--no-load"))
+
+  (setq haskell-process-args-cabal-new-repl
+        '("--ghc-options=-ferror-spans -fshow-loaded-modules"))
+
+  (custom-set-variables
+   '(haskell-process-log t))
+#+END_SRC
+
+Tmux interaction
+
+#+BEGIN_SRC emacs-lisp
+(setq-default cs-ghci-tmux-pane "0")
+
+(defun cs-set-ghci-pane ()
+  (interactive)
+  (setq cs-ghci-tmux-pane (emamux:read-parameter-pane)))
+
+(defun cs-clear-ghci-pane ()
+  (interactive)
+  (cs-send-ghci "C-l"))
+
+(cl-defun cs-send-ghci (&optional command)
+  (interactive)
+  (let* ((target (format "repl:0.%s" cs-ghci-tmux-pane))
+	 (cmd (or command (read-string "> "))))
+    (progn
+      (emamux:reset-prompt target)
+      (emamux:send-keys cmd target))))
+
+(defun cs-reload-ghci ()
+  (interactive)
+  (progn (cs-clear-ghci-pane)
+	 (cs-send-ghci ":r")))
+
+#+END_SRC
+
+Add language extension
+
+#+BEGIN_SRC emacs-lisp
+  (defun add-language-extension ()
+    (interactive)
+    (save-excursion
+      (let ((ext (list (completing-read "> " (split-string (shell-command-to-string "ghc --supported-languages"))))))
+        (goto-char 0)
+        (re-search-forward "^{-#" nil t)
+        (beginning-of-line 1)
+        (open-line 1)
+        (insert (format "{-# LANGUAGE %s #-}" (car ext))))))
+
+  (defun delete-pragma ()
+    (interactive)
+    (save-excursion
+      (goto-char 0)
+      (let ((langs '()))
+        (while (re-search-forward "^{-#" nil t)
+          (push (car (split-string (thing-at-point 'line t) "\n")) langs))
+        (let ((sel (list (completing-read "> " langs))))
+          (goto-char 0)
+          (re-search-forward (car sel) nil t)
+          (kill-whole-line)))))
+#+END_SRC
+
+Keyboard mappings
+
+#+BEGIN_SRC emacs-lisp
+  (add-hook 'haskell-mode-hook
+            (lambda ()
+              (local-set-key (kbd "C-c C-a") 'add-language-extension)
+              (local-set-key (kbd "C-c C-d") 'delete-pragma)
+              (define-key evil-normal-state-map (kbd "M-.") 'haskell-mode-jump-to-def-or-tag)))
+#+END_SRC
+** Agda
+#+BEGIN_SRC emacs-lisp
+  (add-hook 'agda2-mode-hook
+            (lambda () (define-key evil-normal-state-map (kbd "M-.") 'agda2-goto-definition-keyboard)))
+#+END_SRC
+** Scala
+#+BEGIN_SRC emacs-lisp
+(use-package scala-mode
+  :ensure t
+  :interpreter
+  ("scala" . scala-mode))
+#+END_SRC
+** Calfw
+#+BEGIN_SRC emacs-lisp
+(use-package calfw
+  :ensure t
+  :config
+  (setq cfw:fchar-junction ?╋
+	cfw:fchar-vertical-line ?┃
+	cfw:fchar-horizontal-line ?━
+	cfw:fchar-left-junction ?┣
+	cfw:fchar-right-junction ?┫
+	cfw:fchar-top-junction ?┯
+	cfw:fchar-top-left-corner ?┏
+	cfw:fchar-top-right-corner ?┓)
+  (setq cfw:org-overwrite-default-keybinding t
+	calendar-week-start-day 1))
+
+(use-package calfw-org
+  :ensure t)
+
+(setq cfw:org-agenda-schedule-args nil)
+
+(defun open-calendar ()
+  (interactive)
+  (cfw:open-calendar-buffer
+   :contents-sources
+   (list
+    (cfw:org-create-source "#ffffff")  ; orgmode source
+    ;; (cfw:howm-create-source "Blue")  ; howm source
+    ;; (cfw:cal-create-source "Orange") ; diary source
+    ;; (cfw:ical-create-source "Moon" "~/moon.ics" "Gray")  ; ICS source1
+    ;; (cfw:ical-create-source "gcal" "https://..../basic.ics" "IndianRed") ; google calendar ICS
+   )))
+
+
+#+END_SRC
+** Evil
+#+BEGIN_SRC emacs-lisp
+(use-package evil
+  :ensure t
+  :config
+  (evil-mode 1)
+  (setq evil-want-abbrev-expand-on-insert-exit nil) ; abbrevs are very annoying when in coq
+  (setq abbrev-expand-function #'ignore)
+  (evil-leader-mode t)
+  (setq evil-leader/leader "<SPC>")
+  (global-evil-leader-mode 1)
+  (define-key evil-emacs-state-map [escape] nil)
+  (define-key evil-normal-state-map (kbd "C-g") 'evil-show-file-info) ; vim-like c-g when in evil mode
+  (setq evil-emacs-state-modes '(magit-mode help-mode magit-popup-mode org-agenda-mode))
+  (setq evil-motion-state-modes nil)
+  (use-package evil-paredit
+  :ensure t
+  :config
+  (evil-paredit-mode 1)))
+#+END_SRC
+
+Evil-leader -- some of these mappings I'm not sure about.
+#+BEGIN_SRC emacs-lisp
+  (use-package evil-leader
+    :ensure t
+    :config
+    (evil-leader/set-key
+    "ev"   'open-dotemacs
+    "aa"   'align-regexp
+    "TAB"  'ivy-switch-buffer
+    "SPC"  'counsel-projectile
+    "cr"   'cs-reload-ghci
+    "c>"   'cs-send-ghci
+    "c:"   'send-ghci-command
+    ;; Git
+    "gs"   'magit-status
+    "gp"   'magit-pull
+    "gu"   'magit-push-popup
+    "gc"   'magit-commit
+    "gb"   'magit-blame
+    "gd"   'magit-diff-buffer-file
+    "ga"   'magit-stage
+    "ghp"  'diff-hl-diff-goto-hunk
+    "ghu"  'diff-hl-revert-hunk
+    ;; Org
+    "op"   'org-latex-export-to-pdf
+    ;; Toggles
+    "tr"   'linum-relative-mode
+    "tn"   'linum-mode
+    ))
+  
+  (setq ghci-buffer "ghc-in-ghci")
+
+  (defun send-ghci-buffer (str)
+    (comint-send-string ghci-buffer str))
+
+  (defun reload-ghci (arg)
+    (interactive "p")
+    (send-ghci-buffer ":r\n"))
+
+  (defun send-ghci (arg)
+    (interactive "p")
+    (send-ghci-buffer (concat (read-string "> ") "\n")))
+
+  (defun send-ghci-command (arg)
+    (interactive "p")
+    (send-ghci-buffer (concat ":" (read-string ":") "\n")))
+
+  (defun clear-ghci (arg)
+    (interactive "p")
+    (comint-send-string ghci-buffer "\C-l"))
+
+#+END_SRC
+** Helm
+#+BEGIN_SRC 
+(use-package helm
+  :ensure t
+  :bind ("M-x" . helm-M-x)
+  :diminish helm-mode
+  :commands helm-mode
+  :init
+  ;; Note: these settings break "C-h m" in helm (which is not too
+  ;; useful anyway)
+  :config
+  (helm-mode 1)
+  (setq helm-buffers-fuzzy-matching t)
+  (setq helm-autoresize-mode nil)
+  (setq helm-buffer-max-length 40)
+  (setq helm-display-function 'pop-to-buffer) ; make helm play nice
+  (define-key helm-map (kbd "S-SPC") 'helm-toggle-visible-mark)
+  )
+#+END_SRC
+** Ivy
+#+BEGIN_SRC emacs-lisp
+  (use-package ivy
+    :diminish ivy-mode
+    :ensure t
+    :init
+    (ivy-mode 1)
+    :bind (("C-x b"   . ivy-switch-buffer)
+           ("C-c C-r" . ivy-resume)
+           ("C-c s"   . swiper-at-point)
+           ("C-s"     . swiper))
+    :config
+    (defun swiper-at-point ()
+      (interactive)
+      (swiper (thing-at-point 'word)))
+    (use-package swiper
+      :ensure t
+      :bind ("C-s" . 'swiper))
+    (use-package counsel
+      :ensure t
+      :bind ("M-x" . 'counsel-M-x)
+      :bind ("C-x C-f" . 'counsel-find-file)
+      )
+    (setq ivy-use-virtual-buffers t
+          enable-recursive-minibuffers t
+          ivy-height 20))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package ivy-hydra
+  :ensure t)
+#+END_SRC
+
+Ivy-rich
+#+BEGIN_SRC emacs-lisp
+  (use-package ivy-rich
+    :ensure t
+    :after counsel
+    :custom
+    (ivy-virtual-abbreviate 'full
+     ivy-rich-switch-buffer-align-virtual-buffer t
+     ivy-rich-path-style 'abbrev)
+    :init
+    (ivy-rich-mode))
+#+END_SRC
+** Magit
+#+BEGIN_SRC emacs-lisp
+  (use-package magit
+    :ensure t
+    :bind ("C-x g" . magit-status))
+#+END_SRC
+#+BEGIN_SRC emacs-lisp
+  (use-package magithub
+    :ensure t
+    :after magit
+    :config
+    (magithub-feature-autoinject t)
+    (setq magithub-clone-default-directory "~/github"))
+#+END_SRC
+** Company
+#+BEGIN_SRC emacs-lisp
+(use-package company
+  :ensure t
+  :config
+  (company-mode 1)
+  :bind (:map company-active-map
+	      ("C-n" . company-select-next)
+	      ("C-p" . company-select-previous)
+	      ("C-l" . company-complete-selection)))
+
+#+END_SRC
+** Shackle
+Ensure positioning of certain buffers (helm, in particular).
+#+BEGIN_SRC emacs-lisp
+  (use-package shackle
+    :ensure t
+    :config
+    (shackle-mode 1)
+    (setq shackle-rules
+          '(("\\`\\*helm.*?\\*\\'" :regexp t :align t :ratio 0.4)
+            (compilation-mode :noselect t)
+            (help-mode        :select t   :align below :size 0.25)
+            (magit            :select t   :align below :size 0.25))))
+#+END_SRC
+** Pdf-tools
+#+BEGIN_SRC
+(use-package pdf-tools
+    :ensure t
+    :config
+    (pdf-tools-install)
+    (setq-default pdf-view-display-size 'fit-page)
+    (evil-define-key 'normal pdf-view-mode-map (kbd "g") 'pdf-view-first-page)
+    (evil-define-key 'normal pdf-view-mode-map (kbd "g") 'pdf-view-first-page)
+    (evil-define-key 'normal pdf-view-mode-map (kbd "G") 'pdf-view-last-page)
+    (evil-define-key 'normal pdf-view-mode-map (kbd "l") 'image-forward-hscroll)
+    (evil-define-key 'normal pdf-view-mode-map (kbd "h") 'image-backward-hscroll)
+    (evil-define-key 'normal pdf-view-mode-map (kbd "j") 'pdf-view-next-page)
+    (evil-define-key 'normal pdf-view-mode-map (kbd "k") 'pdf-view-previous-page)
+    (evil-define-key 'normal pdf-view-mode-map (kbd "u") 'pdf-view-revert-buffer)
+    (evil-define-key 'normal pdf-view-mode-map (kbd "/") 'pdf-occur)
+    (evil-define-key 'normal pdf-view-mode-map (kbd "+") 'pdf-view-enlarge)
+    (evil-define-key 'normal pdf-view-mode-map (kbd "-") 'pdf-view-shrink)
+    (use-package org-pdfview
+      :ensure t))
+
+#+END_SRC
+** Linum-relative
+#+BEGIN_SRC emacs-lisp
+(use-package linum-relative
+  :ensure t
+  :config
+;; Use `display-line-number-mode` as linum-mode's backend for smooth performance
+  (setq linum-relative-backend 'display-line-numbers-mode)
+  (setq linum-relative-format "%3s "))
+#+END_SRC
+** Diff-hl
+#+BEGIN_SRC emacs-lisp
+(use-package diff-hl
+  :ensure t
+  :hook (prog-mode . diff-hl-mode))
+#+END_SRC
+** fzf
+#+BEGIN_SRC emacs-lisp
+(use-package fzf
+  :ensure t)
+#+END_SRC
+** which-key
+#+BEGIN_SRC emacs-lisp
+  (use-package which-key
+    :ensure t)
+#+END_SRC
+** AucTeX
+#+BEGIN_SRC
+  (use-package auctex
+    :ensure t
+  )
+#+END_SRC
+** Tmux
+#+BEGIN_SRC emacs-lisp
+(use-package emamux
+:ensure t)
+#+END_SRC
+** rainbow-mode
+#+BEGIN_SRC emacs-lisp
+(use-package rainbow-mode
+:ensure t
+:config
+(rainbow-mode 1))
+#+END_SRC
+** Yasnippet
+#+BEGIN_SRC emacs-lisp
+(use-package yasnippet                  ; Snippets
+  :diminish yas-minor-mode
+  :ensure t
+  :config
+  (setq
+   yas-verbosity 1                      ; No need to be so verbose
+   yas-wrap-around-region t)
+
+  (with-eval-after-load 'yasnippet
+    (setq yas-snippet-dirs '(yasnippet-snippets-dir)))
+  (define-key yas-minor-mode-map (kbd "SPC") yas-maybe-expand)
+
+  (yas-reload-all)
+  (yas-global-mode))
+
+(use-package yasnippet-snippets         ; Collection of snippets
+  :ensure t)
+#+END_SRC
+** Diminish
+#+BEGIN_SRC emacs-lisp
+(use-package diminish
+  :ensure t)
+#+END_SRC
+** Undo-tree
+#+BEGIN_SRC emacs-lisp
+(use-package undo-tree
+  :ensure t
+  :diminish)
+#+END_SRC
+** mmm
+#+BEGIN_SRC emacs-lisp
+(use-package mmm-mode
+:ensure t
+:config
+(add-hook 'haskell-mode-hook 'my-mmm-mode)
+
+(mmm-add-classes
+ '((literate-haskell-bird
+    :submode text-mode
+    :front "^[^>]"
+    :include-front true
+    :back "^>\\|$"
+    )
+   (literate-haskell-latex
+    :submode literate-haskell-mode
+    :front "^\\\\begin{code}"
+    :front-offset (end-of-line 1)
+    :back "^\\\\end{code}"
+    :include-back nil
+    :back-offset (beginning-of-line -1)
+    )))
+
+(defun my-mmm-mode ()
+  ;; go into mmm minor mode when class is given
+  (make-local-variable 'mmm-global-mode)
+  (setq mmm-global-mode 'true))
+
+(setq mmm-submode-decoration-level 0))
+#+END_SRC

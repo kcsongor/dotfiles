@@ -28,7 +28,7 @@ Plug 'lervag/vimtex'
 Plug 'mattn/gist-vim'
 Plug 'mattn/webapi-vim'
 Plug 'mbbill/undotree'
-Plug 'radenling/vim-dispatch-neovim'
+"Plug 'radenling/vim-dispatch-neovim'
 Plug 'tpope/vim-commentary'
 Plug 'tpope/vim-dispatch'
 Plug 'tpope/vim-fugitive'
@@ -69,10 +69,10 @@ function! init#toggle_presentation_mode()
 endfunction
 
 "COLOURS {{{1
-call colours#update_background()
-call colours#lazy_colorscheme('monochrome')
+"call colours#update_background()
+"call colours#lazy_colorscheme('monochrome')
 colorscheme monochrome
-set background=dark
+set background=light
 
 " TEMP PRESENTATION STUFF {{{1
 
@@ -93,17 +93,17 @@ function! init#status_module_name()
   return expand('%')
 endfunction
 
-function! init#status_project_name()
-  if &filetype == "haskell"
-    let prjName = GetProjectName()
-    if prjName != -1
-      return "[" . prjName . "]"
-    else
-      return "[-]"
-    endif
-  endif
-  return ""
-endfunction
+" function! init#status_project_name()
+"   if &filetype == "haskell"
+"     let prjName = GetProjectName()
+"     if prjName != -1
+"       return "[" . prjName . "]"
+"     else
+"       return "[-]"
+"     endif
+"   endif
+"   return ""
+" endfunction
 
 function! init#working_dir()
   return systemlist('git rev-parse --show-toplevel 2>/dev/null || pwd')[0]
@@ -120,7 +120,7 @@ endfunction
 let g:hardtime_default_on = 0
 
 set statusline =
-set statusline+=%{init#status_project_name()}\ 
+" set statusline+=%{init#status_project_name()}\ 
 "set statusline+=%<%#Status1#
 set statusline+=%{init#status_module_name()}
 set statusline+=\ 
@@ -396,7 +396,7 @@ function! init#haskell_mappings()
 
   " Working on GHC
   nmap     <buffer> <leader>jN <Plug>Find-note-under-cursor
-  "nmap     <buffer> <leader>jn <Plug>Find-notes
+  nmap     <buffer> <leader>jn <Plug>Find-notes
 endfunction
 
 function! init#lhaskell_mappings()
