@@ -68,7 +68,7 @@ Quickly open this file.
 Coq stuff (commented out)
 
 #+BEGIN_SRC emacs-lisp
-  ;;-------------------------------------------------------------------------------- 
+  ;;--------------------------------------------------------------------------------
   ;; Coq stuff
 
   ;;(require 'proof-site "~/.emacs.d/lisp/PG/generic/proof-site")
@@ -92,7 +92,7 @@ Coq stuff (commented out)
   ;;	    "*Face for locked region of proof script (processed commands)."
   ;;	    :group 'proof-faces)))
 
-  ;;;-------------------------------------------------------------------------------- 
+  ;;;--------------------------------------------------------------------------------
 
   ;; Org mode latex stuff
   (add-to-list 'org-entities-user
@@ -127,6 +127,23 @@ Get font face under cursor.
     (let ((face (or (get-char-property position 'read-face-name)
                     (get-char-property position 'face))))
       (if face (message "Face: %s" face) (message "No face at %d" position))))
+#+END_SRC
+
+Toggle dedicated window (from [[https://stackoverflow.com/questions/43765/pin-emacs-buffers-to-windows-for-cscope]])
+
+#+BEGIN_SRC emacs-lisp
+;; Toggle window dedication
+
+(defun toggle-window-dedicated ()
+"Toggle whether the current active window is dedicated or not"
+(interactive)
+(message
+ (if (let (window (get-buffer-window (current-buffer)))
+       (set-window-dedicated-p window
+        (not (window-dedicated-p window))))
+    "Window '%s' is dedicated"
+    "Window '%s' is normal")
+ (current-buffer)))
 #+END_SRC
 
 ** IRC
@@ -364,6 +381,14 @@ Add language extension
           (kill-whole-line)))))
 #+END_SRC
 
+#+BEGIN_SRC emacs-lisp
+(define-transient-command haskell-transient-mode ()
+  :transient-suffix     'transient--do-stay
+  :transient-non-suffix 'transient--do-warn
+  [("p" "previous visible heading" haskell-ds-backward-decl)
+   ("n" "next visible heading" haskell-ds-forward-decl)])
+#+END_SRC
+
 Keyboard mappings
 
 #+BEGIN_SRC emacs-lisp
@@ -449,18 +474,12 @@ Evil-leader -- some of these mappings I'm not sure about.
     (evil-leader/set-key
     "ev"   'open-dotemacs
     "aa"   'align-regexp
-    "TAB"  'ivy-switch-buffer
+    "TAB"  'counsel-projectile-switch-to-buffer
     "SPC"  'counsel-projectile
     "cr"   'cs-reload-ghci
     "c>"   'cs-send-ghci
     "c:"   'send-ghci-command
     ;; Git
-    "gs"   'magit-status
-    "gp"   'magit-pull
-    "gu"   'magit-push-popup
-    "gc"   'magit-commit
-    "gb"   'magit-blame
-    "gd"   'magit-diff-buffer-file
     "ga"   'magit-stage
     "ghp"  'diff-hl-diff-goto-hunk
     "ghu"  'diff-hl-revert-hunk
@@ -470,7 +489,7 @@ Evil-leader -- some of these mappings I'm not sure about.
     "tr"   'linum-relative-mode
     "tn"   'linum-mode
     ))
-  
+
   (setq ghci-buffer "ghc-in-ghci")
 
   (defun send-ghci-buffer (str)
@@ -494,7 +513,7 @@ Evil-leader -- some of these mappings I'm not sure about.
 
 #+END_SRC
 ** Helm
-#+BEGIN_SRC 
+#+BEGIN_SRC
 (use-package helm
   :ensure t
   :bind ("M-x" . helm-M-x)
